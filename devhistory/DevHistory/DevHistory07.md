@@ -21,7 +21,7 @@ C 구현의 네 번째 단계(MVP4)는 서버에 영속성(Persistence) 계층�
 새로운 `persistence.c` 파일이 추가됨에 따라, `Makefile`의 소스 목록이 이를 포함하도록 업데이트됩니다.
 
 ```makefile
-# [SEQUENCE: MVP7-1]
+# [SEQUENCE: MVP4-1]
 # LogCaster-C Makefile - MVP4 with persistence
 CC = gcc
 CFLAGS = -Wall -Wextra -Werror -pedantic -std=c11 -O2 -D_GNU_SOURCE
@@ -34,7 +34,7 @@ INC_DIR = include
 OBJ_DIR = obj
 BIN_DIR = bin
 
-# [SEQUENCE: MVP7-2]
+# [SEQUENCE: MVP4-2]
 # Source and object files (persistence.c added)
 SRCS = $(wildcard $(SRC_DIR)/*.c)
 OBJS = $(SRCS:$(SRC_DIR)/%.c=$(OBJ_DIR)/%.o)
@@ -52,7 +52,7 @@ TARGET = $(BIN_DIR)/logcaster-c
 영속성 관리자의 설정 구조체, 메인 구조체 및 공개 API를 정의합니다.
 
 ```c
-// [SEQUENCE: MVP7-3]
+// [SEQUENCE: MVP4-3]
 #ifndef PERSISTENCE_H
 #define PERSISTENCE_H
 
@@ -61,7 +61,7 @@ TARGET = $(BIN_DIR)/logcaster-c
 #include <pthread.h>
 #include <stdio.h>
 
-// [SEQUENCE: MVP7-4]
+// [SEQUENCE: MVP4-4]
 // 영속성 설정 구조체
 typedef struct {
     bool enabled;
@@ -69,14 +69,14 @@ typedef struct {
     size_t max_file_size;
 } persistence_config_t;
 
-// [SEQUENCE: MVP7-5]
+// [SEQUENCE: MVP4-5]
 // 파일에 쓸 로그 항목 (큐에 저장될 데이터)
 typedef struct write_entry {
     char* message;
     struct write_entry* next;
 } write_entry_t;
 
-// [SEQUENCE: MVP7-6]
+// [SEQUENCE: MVP4-6]
 // 영속성 관리자 메인 구조체
 typedef struct {
     persistence_config_t config;
@@ -90,7 +90,7 @@ typedef struct {
     bool stop_thread;
 } persistence_manager_t;
 
-// [SEQUENCE: MVP7-7]
+// [SEQUENCE: MVP4-7]
 // 영속성 관리자 생명주기 및 API 함수
 persistence_manager_t* persistence_create(const persistence_config_t* config);
 void persistence_destroy(persistence_manager_t* manager);
@@ -104,7 +104,7 @@ int persistence_write(persistence_manager_t* manager, const char* message);
 비동기 파일 쓰기를 위한 Writer 스레드와 파일 로테이션 로직을 구현합니다.
 
 ```c
-// [SEQUENCE: MVP7-8]
+// [SEQUENCE: MVP4-8]
 #include "persistence.h"
 #include <stdlib.h>
 #include <string.h>
@@ -115,7 +115,7 @@ int persistence_write(persistence_manager_t* manager, const char* message);
 static void* persistence_writer_thread(void* arg);
 static void rotate_log_file(persistence_manager_t* manager);
 
-// [SEQUENCE: MVP7-9]
+// [SEQUENCE: MVP4-9]
 // 영속성 관리자 생성
 persistence_manager_t* persistence_create(const persistence_config_t* config) {
     persistence_manager_t* manager = calloc(1, sizeof(persistence_manager_t));
@@ -138,7 +138,7 @@ persistence_manager_t* persistence_create(const persistence_config_t* config) {
     }
     manager->current_file_size = ftell(manager->current_file);
 
-    // [SEQUENCE: MVP7-10]
+    // [SEQUENCE: MVP4-10]
     // Writer 스레드 생성
     if (pthread_create(&manager->writer_thread, NULL, persistence_writer_thread, manager) != 0) {
         fclose(manager->current_file);
@@ -149,7 +149,7 @@ persistence_manager_t* persistence_create(const persistence_config_t* config) {
     return manager;
 }
 
-// [SEQUENCE: MVP7-11]
+// [SEQUENCE: MVP4-11]
 // 로그 쓰기 요청 (큐에 추가)
 int persistence_write(persistence_manager_t* manager, const char* message) {
     if (!manager || !manager->config.enabled) return -1;
@@ -173,7 +173,7 @@ int persistence_write(persistence_manager_t* manager, const char* message) {
     return 0;
 }
 
-// [SEQUENCE: MVP7-12]
+// [SEQUENCE: MVP4-12]
 // Writer 스레드 메인 루프
 static void* persistence_writer_thread(void* arg) {
     persistence_manager_t* manager = (persistence_manager_t*)arg;
@@ -194,7 +194,7 @@ static void* persistence_writer_thread(void* arg) {
                 fflush(manager->current_file);
                 manager->current_file_size += len;
 
-                // [SEQUENCE: MVP7-13]
+                // [SEQUENCE: MVP4-13]
                 // 파일 크기 확인 및 로테이션
                 if (manager->current_file_size >= manager->config.max_file_size) {
                     rotate_log_file(manager);
@@ -209,7 +209,7 @@ static void* persistence_writer_thread(void* arg) {
     return NULL;
 }
 
-// [SEQUENCE: MVP7-14]
+// [SEQUENCE: MVP4-14]
 // 로그 파일 로테이션
 static void rotate_log_file(persistence_manager_t* manager) {
     fclose(manager->current_file);
@@ -227,7 +227,7 @@ static void rotate_log_file(persistence_manager_t* manager) {
     manager->current_file_size = 0;
 }
 
-// [SEQUENCE: MVP7-15]
+// [SEQUENCE: MVP4-15]
 // 영속성 관리자 소멸
 void persistence_destroy(persistence_manager_t* manager) {
     if (!manager) return;
@@ -253,7 +253,7 @@ void persistence_destroy(persistence_manager_t* manager) {
 `log_server_t` 구조체에 `persistence_manager_t` 포인터를 추가합니다.
 
 ```c
-// [SEQUENCE: MVP7-16]
+// [SEQUENCE: MVP4-16]
 #ifndef SERVER_H
 #define SERVER_H
 
@@ -267,7 +267,7 @@ typedef struct log_server {
     thread_pool_t* thread_pool;
     log_buffer_t* log_buffer;
 
-    // [SEQUENCE: MVP7-17]
+    // [SEQUENCE: MVP4-17]
     // MVP4 추가 사항
     persistence_manager_t* persistence;
 } log_server_t;
@@ -282,10 +282,10 @@ typedef struct log_server {
 클라이언트 처리 작업(`handle_client_job`)에서 로그를 디스크에 쓰도록 `persistence_write`를 호출하는 로직을 추가합니다.
 
 ```c
-// [SEQUENCE: MVP7-18]
+// [SEQUENCE: MVP4-18]
 // ... (include 및 전역 변수 선언)
 
-// [SEQUENCE: MVP7-19]
+// [SEQUENCE: MVP4-19]
 // 스레드 풀에서 실행될 클라이언트 처리 작업 (MVP4 버전)
 static void handle_client_job(void* arg) {
     client_job_t* job = (client_job_t*)arg;
@@ -300,7 +300,7 @@ static void handle_client_job(void* arg) {
         // 1. 인메모리 버퍼에 저장
         log_buffer_push(job->server->log_buffer, buffer);
 
-        // [SEQUENCE: MVP7-20]
+        // [SEQUENCE: MVP4-20]
         // 2. 영속성 관리자에게 쓰기 요청 (활성화된 경우)
         if (job->server->persistence) {
             persistence_write(job->server->persistence, buffer);
@@ -311,7 +311,7 @@ static void handle_client_job(void* arg) {
     free(job);
 }
 
-// [SEQUENCE: MVP7-21]
+// [SEQUENCE: MVP4-21]
 // 서버 생성 (MVP4)
 log_server_t* server_create(int port) {
     log_server_t* server = calloc(1, sizeof(log_server_t));
@@ -325,7 +325,7 @@ log_server_t* server_create(int port) {
     return server;
 }
 
-// [SEQUENCE: MVP7-22]
+// [SEQUENCE: MVP4-22]
 // 서버 소멸 (MVP4)
 void server_destroy(log_server_t* server) {
     if (!server) return;
@@ -351,7 +351,7 @@ void server_destroy(log_server_t* server) {
 `getopt`를 사용하여 커맨드 라인 인자를 파싱하고, 이를 기반으로 영속성 관리자를 설정하는 로직이 추가됩니다.
 
 ```c
-// [SEQUENCE: MVP7-23]
+// [SEQUENCE: MVP4-23]
 #include "server.h"
 #include "persistence.h"
 #include <stdio.h>
@@ -365,7 +365,7 @@ int main(int argc, char* argv[]) {
     strncpy(persist_config.log_directory, "./logs", sizeof(persist_config.log_directory) - 1);
     persist_config.max_file_size = 10 * 1024 * 1024; // 10MB
 
-    // [SEQUENCE: MVP7-24]
+    // [SEQUENCE: MVP4-24]
     // getopt를 사용한 커맨드 라인 인자 파싱
     int opt;
     while ((opt = getopt(argc, argv, "p:d:s:Ph")) != -1) {
@@ -383,7 +383,7 @@ int main(int argc, char* argv[]) {
     log_server_t* server = server_create(port);
     if (!server) return 1;
 
-    // [SEQUENCE: MVP7-25]
+    // [SEQUENCE: MVP4-25]
     // 영속성 기능이 활성화되었으면, 관리자를 생성하여 서버에 연결
     if (persist_config.enabled) {
         printf("Persistence enabled. Dir: %s, Max Size: %zu MB\n", 
@@ -409,7 +409,7 @@ int main(int argc, char* argv[]) {
 영속성 기능을 검증하기 위한 새로운 테스트 스크립트(`tests/test_persistence.py`)가 작성되었습니다. 이 스크립트는 `-P` 플래그 유무에 따라 로그 파일이 정상적으로 생성되는지, 로그가 파일에 기록되는지를 확인합니다.
 
 ```python
-# [SEQUENCE: MVP7-26]
+# [SEQUENCE: MVP4-26]
 #!/usr/bin/env python3
 import os
 import socket

@@ -20,7 +20,7 @@ C 구현의 두 번째 단계(MVP2)는 서버의 동시성 모델을 근본적�
 MVP2에서는 `thread_pool.c`, `log_buffer.c`, `query_handler.c` 등 새로운 소스 파일들이 추가되었습니다. `Makefile`은 이 파일들을 포함하도록 업데이트됩니다.
 
 ```makefile
-# [SEQUENCE: MVP3-1]
+# [SEQUENCE: MVP2-1]
 # LogCaster-C Makefile - MVP2 with thread pool
 CC = gcc
 CFLAGS = -Wall -Wextra -Werror -pedantic -std=c11 -O2 -D_GNU_SOURCE
@@ -71,7 +71,7 @@ clean:
 작업 큐와 작업자 스레드들을 관리하는 스레드 풀의 자료구조와 API를 정의합니다.
 
 ```c
-// [SEQUENCE: MVP3-2]
+// [SEQUENCE: MVP2-2]
 #ifndef THREAD_POOL_H
 #define THREAD_POOL_H
 
@@ -81,7 +81,7 @@ clean:
 #define DEFAULT_THREAD_COUNT 4
 #define MAX_THREAD_COUNT 32
 
-// [SEQUENCE: MVP3-3]
+// [SEQUENCE: MVP2-3]
 // 스레드 풀이 처리할 작업을 정의하는 구조체
 typedef struct thread_job {
     void (*function)(void* arg); // 작업 함수 포인터
@@ -89,7 +89,7 @@ typedef struct thread_job {
     struct thread_job* next;     // 다음 작업을 가리키는 포인터 (연결 리스트)
 } thread_job_t;
 
-// [SEQUENCE: MVP3-4]
+// [SEQUENCE: MVP2-4]
 // 스레드 풀을 관리하는 메인 구조체
 typedef struct {
     pthread_t* threads;          // 작업자 스레드 배열
@@ -109,12 +109,12 @@ typedef struct {
     int working_threads;         // 현재 작업 중인 스레드 수
 } thread_pool_t;
 
-// [SEQUENCE: MVP3-5]
+// [SEQUENCE: MVP2-5]
 // 스레드 풀 생명주기 함수
 thread_pool_t* thread_pool_create(int thread_count);
 void thread_pool_destroy(thread_pool_t* pool);
 
-// [SEQUENCE: MVP3-6]
+// [SEQUENCE: MVP2-6]
 // 작업 제출 및 대기 함수
 int thread_pool_add_job(thread_pool_t* pool, void (*function)(void*), void* arg);
 void thread_pool_wait(thread_pool_t* pool);
@@ -127,19 +127,19 @@ void thread_pool_wait(thread_pool_t* pool);
 스레드 풀의 생성, 소멸, 작업 추가 및 작업자 스레드의 실행 로직을 구현합니다.
 
 ```c
-// [SEQUENCE: MVP3-7]
+// [SEQUENCE: MVP2-7]
 #include "thread_pool.h"
 #include <stdlib.h>
 #include <stdio.h>
 
-// [SEQUENCE: MVP3-8]
+// [SEQUENCE: MVP2-8]
 // 작업자 스레드가 실행하는 함수
 static void* thread_pool_worker(void* arg) {
     thread_pool_t* pool = (thread_pool_t*)arg;
     thread_job_t* job;
     
     while (1) {
-        // [SEQUENCE: MVP3-9]
+        // [SEQUENCE: MVP2-9]
         // 작업 큐에 접근하기 위해 뮤텍스 잠금
         pthread_mutex_lock(&pool->queue_mutex);
         
@@ -154,7 +154,7 @@ static void* thread_pool_worker(void* arg) {
             break;
         }
         
-        // [SEQUENCE: MVP3-10]
+        // [SEQUENCE: MVP2-10]
         // 작업 큐에서 작업(job)을 하나 가져옴
         job = pool->job_queue_head;
         pool->job_queue_head = job->next;
@@ -166,7 +166,7 @@ static void* thread_pool_worker(void* arg) {
         
         pthread_mutex_unlock(&pool->queue_mutex);
         
-        // [SEQUENCE: MVP3-11]
+        // [SEQUENCE: MVP2-11]
         // 잠금을 해제한 상태에서 실제 작업 수행
         if (job) {
             job->function(job->arg);
@@ -184,7 +184,7 @@ static void* thread_pool_worker(void* arg) {
     pthread_exit(NULL);
 }
 
-// [SEQUENCE: MVP3-12]
+// [SEQUENCE: MVP2-12]
 // 스레드 풀 생성
 thread_pool_t* thread_pool_create(int thread_count) {
     if (thread_count <= 0 || thread_count > MAX_THREAD_COUNT) {
@@ -205,7 +205,7 @@ thread_pool_t* thread_pool_create(int thread_count) {
     pthread_cond_init(&pool->job_available, NULL);
     pthread_cond_init(&pool->all_jobs_done, NULL);
     
-    // [SEQUENCE: MVP3-13]
+    // [SEQUENCE: MVP2-13]
     // 작업자 스레드 생성
     for (int i = 0; i < thread_count; i++) {
         if (pthread_create(&pool->threads[i], NULL, thread_pool_worker, pool) != 0) {
@@ -217,7 +217,7 @@ thread_pool_t* thread_pool_create(int thread_count) {
     return pool;
 }
 
-// [SEQUENCE: MVP3-14]
+// [SEQUENCE: MVP2-14]
 // 작업 큐에 작업 추가
 int thread_pool_add_job(thread_pool_t* pool, void (*function)(void*), void* arg) {
     if (!pool || !function || pool->shutdown) return -1;
@@ -240,7 +240,7 @@ int thread_pool_add_job(thread_pool_t* pool, void (*function)(void*), void* arg)
     }
     pool->job_count++;
 
-    // [SEQUENCE: MVP3-15]
+    // [SEQUENCE: MVP2-15]
     // 대기 중인 스레드에게 새 작업이 있음을 알림
     pthread_cond_signal(&pool->job_available);
     pthread_mutex_unlock(&pool->queue_mutex);
@@ -248,7 +248,7 @@ int thread_pool_add_job(thread_pool_t* pool, void (*function)(void*), void* arg)
     return 0;
 }
 
-// [SEQUENCE: MVP3-16]
+// [SEQUENCE: MVP2-16]
 // 모든 작업이 완료될 때까지 대기
 void thread_pool_wait(thread_pool_t* pool) {
     if (!pool) return;
@@ -259,7 +259,7 @@ void thread_pool_wait(thread_pool_t* pool) {
     pthread_mutex_unlock(&pool->queue_mutex);
 }
 
-// [SEQUENCE: MVP3-17]
+// [SEQUENCE: MVP2-17]
 // 스레드 풀 종료 및 리소스 해제
 void thread_pool_destroy(thread_pool_t* pool) {
     if (!pool) return;
@@ -295,7 +295,7 @@ void thread_pool_destroy(thread_pool_t* pool) {
 로그 메시지를 저장하는 스레드 안전 원형 버퍼의 자료구조와 API를 정의합니다.
 
 ```c
-// [SEQUENCE: MVP3-18]
+// [SEQUENCE: MVP2-18]
 #ifndef LOG_BUFFER_H
 #define LOG_BUFFER_H
 
@@ -306,14 +306,14 @@ void thread_pool_destroy(thread_pool_t* pool) {
 
 #define DEFAULT_BUFFER_SIZE 10000
 
-// [SEQUENCE: MVP3-19]
+// [SEQUENCE: MVP2-19]
 // 로그 항목을 표현하는 구조체
 typedef struct {
     char* message;
     time_t timestamp;
 } log_entry_t;
 
-// [SEQUENCE: MVP3-20]
+// [SEQUENCE: MVP2-20]
 // 스레드 안전 원형 로그 버퍼 구조체
 typedef struct {
     log_entry_t** entries;    // 로그 항목 포인터의 원형 배열
@@ -329,17 +329,17 @@ typedef struct {
     unsigned long dropped_logs;
 } log_buffer_t;
 
-// [SEQUENCE: MVP3-21]
+// [SEQUENCE: MVP2-21]
 // 버퍼 생명주기 함수
 log_buffer_t* log_buffer_create(size_t capacity);
 void log_buffer_destroy(log_buffer_t* buffer);
 
-// [SEQUENCE: MVP3-22]
+// [SEQUENCE: MVP2-22]
 // 버퍼 조작 함수
 int log_buffer_push(log_buffer_t* buffer, const char* message);
 int log_buffer_search(log_buffer_t* buffer, const char* keyword, char*** results, int* count);
 
-// [SEQUENCE: MVP3-23]
+// [SEQUENCE: MVP2-23]
 // 버퍼 상태 조회 함수
 size_t log_buffer_size(log_buffer_t* buffer);
 void log_buffer_get_stats(log_buffer_t* buffer, unsigned long* total, unsigned long* dropped);
@@ -352,13 +352,13 @@ void log_buffer_get_stats(log_buffer_t* buffer, unsigned long* total, unsigned l
 로그 버퍼의 생성, 소멸, 로그 추가(`push`), 기본 검색(`search`) 로직을 구현합니다.
 
 ```c
-// [SEQUENCE: MVP3-24]
+// [SEQUENCE: MVP2-24]
 #include "log_buffer.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
 
-// [SEQUENCE: MVP3-25]
+// [SEQUENCE: MVP2-25]
 // 로그 버퍼 생성
 log_buffer_t* log_buffer_create(size_t capacity) {
     if (capacity == 0) capacity = DEFAULT_BUFFER_SIZE;
@@ -378,7 +378,7 @@ log_buffer_t* log_buffer_create(size_t capacity) {
     return buffer;
 }
 
-// [SEQUENCE: MVP3-26]
+// [SEQUENCE: MVP2-26]
 // 로그 버퍼에 로그 추가
 int log_buffer_push(log_buffer_t* buffer, const char* message) {
     if (!buffer || !message) return -1;
@@ -395,7 +395,7 @@ int log_buffer_push(log_buffer_t* buffer, const char* message) {
     
     pthread_mutex_lock(&buffer->mutex);
     
-    // [SEQUENCE: MVP3-27]
+    // [SEQUENCE: MVP2-27]
     // 버퍼가 가득 찼으면 가장 오래된 로그를 삭제 (덮어쓰기)
     if (buffer->size == buffer->capacity) {
         log_entry_t* old_entry = buffer->entries[buffer->tail];
@@ -406,7 +406,7 @@ int log_buffer_push(log_buffer_t* buffer, const char* message) {
         buffer->dropped_logs++;
     }
     
-    // [SEQUENCE: MVP3-28]
+    // [SEQUENCE: MVP2-28]
     // 새로운 로그를 head 위치에 추가
     buffer->entries[buffer->head] = entry;
     buffer->head = (buffer->head + 1) % buffer->capacity;
@@ -417,7 +417,7 @@ int log_buffer_push(log_buffer_t* buffer, const char* message) {
     return 0;
 }
 
-// [SEQUENCE: MVP3-29]
+// [SEQUENCE: MVP2-29]
 // 키워드를 포함하는 로그 검색 (MVP2 기본 버전)
 int log_buffer_search(log_buffer_t* buffer, const char* keyword, char*** results, int* count) {
     if (!buffer || !keyword || !results || !count) return -1;
@@ -459,7 +459,7 @@ int log_buffer_search(log_buffer_t* buffer, const char* keyword, char*** results
     return 0;
 }
 
-// [SEQUENCE: MVP3-30]
+// [SEQUENCE: MVP2-30]
 // 버퍼 상태 조회 함수들
 size_t log_buffer_size(log_buffer_t* buffer) {
     if (!buffer) return 0;
@@ -477,7 +477,7 @@ void log_buffer_get_stats(log_buffer_t* buffer, unsigned long* total, unsigned l
     pthread_mutex_unlock(&buffer->mutex);
 }
 
-// [SEQUENCE: MVP3-31]
+// [SEQUENCE: MVP2-31]
 // 로그 버퍼 소멸
 void log_buffer_destroy(log_buffer_t* buffer) {
     if (!buffer) return;
@@ -497,7 +497,7 @@ void log_buffer_destroy(log_buffer_t* buffer) {
 쿼리 포트로 들어온 요청을 처리하는 함수의 프로토타입을 정의합니다.
 
 ```c
-// [SEQUENCE: MVP3-32]
+// [SEQUENCE: MVP2-32]
 #ifndef QUERY_HANDLER_H
 #define QUERY_HANDLER_H
 
@@ -514,7 +514,7 @@ void handle_query_connection(struct log_server* server);
 쿼리 연결을 수락하고, 들어온 명령을 파싱하여 해당하는 작업을 수행합니다. MVP2에서는 `STATS`, `COUNT`, `QUERY keyword=` 세 가지 명령을 처리합니다.
 
 ```c
-// [SEQUENCE: MVP3-33]
+// [SEQUENCE: MVP2-33]
 #include "query_handler.h"
 #include "server.h"
 #include <string.h>
@@ -523,7 +523,7 @@ void handle_query_connection(struct log_server* server);
 #include <unistd.h>
 #include <sys/socket.h>
 
-// [SEQUENCE: MVP3-34]
+// [SEQUENCE: MVP2-34]
 // 쿼리 명령 처리
 static void process_query_command(log_server_t* server, int client_fd, const char* command) {
     char response[BUFFER_SIZE];
@@ -560,7 +560,7 @@ static void process_query_command(log_server_t* server, int client_fd, const cha
     }
 }
 
-// [SEQUENCE: MVP3-35]
+// [SEQUENCE: MVP2-35]
 // 쿼리 연결 수락 및 처리
 void handle_query_connection(log_server_t* server) {
     int client_fd = accept(server->query_fd, NULL, NULL);
@@ -584,7 +584,7 @@ void handle_query_connection(log_server_t* server) {
 `log_server_t` 구조체에 스레드 풀과 로그 버퍼 포인터를 추가하고, 쿼리 포트 관련 필드를 추가합니다. 클라이언트 작업을 스레드 풀에 전달하기 위한 `client_job_t` 구조체도 새로 정의합니다.
 
 ```c
-// [SEQUENCE: MVP3-36]
+// [SEQUENCE: MVP2-36]
 #ifndef SERVER_H
 #define SERVER_H
 
@@ -598,7 +598,7 @@ void handle_query_connection(log_server_t* server) {
 #define MAX_CLIENTS 1024
 #define BUFFER_SIZE 4096
 
-// [SEQUENCE: MVP3-37]
+// [SEQUENCE: MVP2-37]
 // 서버 구조체 (MVP2 버전)
 typedef struct log_server {
     int port;
@@ -616,14 +616,14 @@ typedef struct log_server {
     log_buffer_t* log_buffer;
 } log_server_t;
 
-// [SEQUENCE: MVP3-38]
+// [SEQUENCE: MVP2-38]
 // 클라이언트 작업을 위한 컨텍스트 구조체
 typedef struct {
     int client_fd;
     log_server_t* server;
 } client_job_t;
 
-// [SEQUENCE: MVP3-39]
+// [SEQUENCE: MVP2-39]
 // 서버 생명주기 함수
 log_server_t* server_create(int port);
 void server_destroy(log_server_t* server);
@@ -638,7 +638,7 @@ void server_run(log_server_t* server);
 서버의 메인 로직이 크게 변경됩니다. `select` 루프는 이제 연결 수락만 담당하고, 실제 데이터 처리는 `handle_client_job` 함수로 분리되어 스레드 풀에서 실행됩니다.
 
 ```c
-// [SEQUENCE: MVP3-40]
+// [SEQUENCE: MVP2-40]
 #include "server.h"
 #include "query_handler.h"
 #include <stdio.h>
@@ -657,7 +657,7 @@ static void sigint_handler(int sig) {
     if (g_server) g_server->running = 0;
 }
 
-// [SEQUENCE: MVP3-41]
+// [SEQUENCE: MVP2-41]
 // 스레드 풀에서 실행될 클라이언트 처리 작업
 static void handle_client_job(void* arg) {
     client_job_t* job = (client_job_t*)arg;
@@ -679,7 +679,7 @@ static void handle_client_job(void* arg) {
     free(job);
 }
 
-// [SEQUENCE: MVP3-42]
+// [SEQUENCE: MVP2-42]
 // 서버 생성 (MVP2)
 log_server_t* server_create(int port) {
     log_server_t* server = calloc(1, sizeof(log_server_t));
@@ -698,7 +698,7 @@ log_server_t* server_create(int port) {
     return server;
 }
 
-// [SEQUENCE: MVP3-43]
+// [SEQUENCE: MVP2-43]
 // 리스너 소켓 초기화 헬퍼 함수
 static int init_listener(int port) {
     int fd = socket(AF_INET, SOCK_STREAM, 0);
@@ -715,7 +715,7 @@ static int init_listener(int port) {
     return fd;
 }
 
-// [SEQUENCE: MVP3-44]
+// [SEQUENCE: MVP2-44]
 // 서버 초기화 (두 개의 리스너)
 int server_init(log_server_t* server) {
     server->listen_fd = init_listener(server->port);
@@ -733,7 +733,7 @@ int server_init(log_server_t* server) {
     return 0;
 }
 
-// [SEQUENCE: MVP3-45]
+// [SEQUENCE: MVP2-45]
 // 서버 메인 루프 (MVP2)
 void server_run(log_server_t* server) {
     printf("LogCaster-C MVP2 server running...\nLog port: %d, Query port: %d\n", server->port, server->query_port);
@@ -748,7 +748,7 @@ void server_run(log_server_t* server) {
         for (int i = 0; i <= server->max_fd; i++) {
             if (FD_ISSET(i, &server->read_set)) {
                 if (i == server->listen_fd) {
-                    // [SEQUENCE: MVP3-46]
+                    // [SEQUENCE: MVP2-46]
                     // 새 로그 클라이언트 연결 -> 스레드 풀에 작업 제출
                     int new_fd = accept(server->listen_fd, NULL, NULL);
                     if (new_fd < 0) continue;
@@ -759,7 +759,7 @@ void server_run(log_server_t* server) {
                     job->server = server;
                     thread_pool_add_job(server->thread_pool, handle_client_job, job);
                 } else if (i == server->query_fd) {
-                    // [SEQUENCE: MVP3-47]
+                    // [SEQUENCE: MVP2-47]
                     // 새 쿼리 클라이언트 연결 -> 직접 처리
                     handle_query_connection(server);
                 }
@@ -768,7 +768,7 @@ void server_run(log_server_t* server) {
     }
 }
 
-// [SEQUENCE: MVP3-48]
+// [SEQUENCE: MVP2-48]
 // 서버 소멸 (MVP2)
 void server_destroy(log_server_t* server) {
     if (!server) return;
@@ -788,12 +788,12 @@ void server_destroy(log_server_t* server) {
 MVP2에서는 별도의 커맨드 라인 인자가 없으므로, `main` 함수는 서버를 생성, 초기화, 실행, 소멸시키는 역할만 단순하게 수행합니다.
 
 ```c
-// [SEQUENCE: MVP3-49]
+// [SEQUENCE: MVP2-49]
 #include "server.h"
 #include <stdio.h>
 
 int main(void) {
-    // [SEQUENCE: MVP3-50]
+    // [SEQUENCE: MVP2-50]
     // 서버 생성
     log_server_t* server = server_create(DEFAULT_PORT);
     if (!server) {
@@ -801,7 +801,7 @@ int main(void) {
         return 1;
     }
 
-    // [SEQUENCE: MVP3-51]
+    // [SEQUENCE: MVP2-51]
     // 서버 초기화
     if (server_init(server) < 0) {
         fprintf(stderr, "Failed to initialize server.\n");
@@ -809,7 +809,7 @@ int main(void) {
         return 1;
     }
 
-    // [SEQUENCE: MVP3-52]
+    // [SEQUENCE: MVP2-52]
     // 서버 실행 및 소멸
     server_run(server);
     server_destroy(server);
@@ -823,7 +823,7 @@ int main(void) {
 MVP2의 새로운 기능(스레드 풀, 쿼리 인터페이스)을 검증하기 위해 새로운 Python 테스트 스크립트(`tests/test_mvp2.py`)가 작성되었습니다. 이 스크립트는 다수의 클라이언트를 동시에 연결하여 로그를 보내고, 별도로 쿼리 포트에 접속하여 서버 상태와 로그 내용을 확인합니다.
 
 ```python
-# [SEQUENCE: MVP3-53]
+# [SEQUENCE: MVP2-53]
 #!/usr/bin/env python3
 """
 Test client for LogCaster-C MVP2

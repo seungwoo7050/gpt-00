@@ -1,4 +1,5 @@
 #include "IRCClient.h"
+#include <sys/socket.h>
 #include "IRCCommandParser.h"
 #include <unistd.h>
 #include <cstring>

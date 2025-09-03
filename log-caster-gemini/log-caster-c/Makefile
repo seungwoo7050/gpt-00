@@ -1,4 +1,4 @@
-# LogCaster-C Makefile - MVP2 with thread pool
+# LogCaster-C Makefile
 CC = gcc
 CFLAGS = -Wall -Wextra -Werror -pedantic -std=c11 -O2 -D_GNU_SOURCE
 LDFLAGS = -pthread
@@ -6,12 +6,11 @@ INCLUDES = -I./include
 
 # Directories
 SRC_DIR = src
-INC_DIR = include
-OBJ_DIR = obj
-BIN_DIR = bin
+BUILD_DIR = build
+OBJ_DIR = $(BUILD_DIR)/obj
 
 # Target executable
-TARGET = $(BIN_DIR)/logcaster-c
+TARGET = $(BUILD_DIR)/logcaster-c
 
 # Source and object files
 SRCS = $(wildcard $(SRC_DIR)/*.c)
@@ -22,7 +21,7 @@ all: directories $(TARGET)
 
 # Create necessary directories
 directories:
-	@mkdir -p $(OBJ_DIR) $(BIN_DIR)
+	@mkdir -p $(OBJ_DIR)
 
 # Build target
 $(TARGET): $(OBJS)
@@ -35,7 +34,7 @@ $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
 
 # Clean build artifacts
 clean:
-	rm -rf $(OBJ_DIR) $(BIN_DIR)
+	rm -rf $(BUILD_DIR)
 	@echo "Clean complete"
 
 # Run the server

@@ -22,7 +22,7 @@ C 구현의 세 번째 단계(MVP3)는 서버의 핵심 가치 중 하나인 '�
 새로운 `query_parser.c` 파일이 추가됨에 따라, `Makefile`의 소스 목록(`SRCS`)이 이를 포함하도록 업데이트됩니다. 다른 설정은 MVP2와 동일합니다.
 
 ```makefile
-# [SEQUENCE: MVP5-1]
+# [SEQUENCE: MVP3-1]
 # LogCaster-C Makefile - MVP3 with enhanced query
 CC = gcc
 CFLAGS = -Wall -Wextra -Werror -pedantic -std=c11 -O2 -D_GNU_SOURCE
@@ -35,7 +35,7 @@ INC_DIR = include
 OBJ_DIR = obj
 BIN_DIR = bin
 
-# [SEQUENCE: MVP5-2]
+# [SEQUENCE: MVP3-2]
 # Source and object files (query_parser.c added)
 SRCS = $(wildcard $(SRC_DIR)/*.c)
 OBJS = $(SRCS:$(SRC_DIR)/%.c=$(OBJ_DIR)/%.o)
@@ -69,7 +69,7 @@ clean:
 고급 쿼리를 파싱하고, 그 결과를 담는 구조체(`parsed_query_t`)와 관련 함수들을 정의합니다.
 
 ```c
-// [SEQUENCE: MVP5-3]
+// [SEQUENCE: MVP3-3]
 #ifndef QUERY_PARSER_H
 #define QUERY_PARSER_H
 
@@ -77,14 +77,14 @@ clean:
 #include <time.h>
 #include <regex.h>
 
-// [SEQUENCE: MVP5-4]
+// [SEQUENCE: MVP3-4]
 // 쿼리 연산자 종류 (AND/OR)
 typedef enum {
     OP_AND,
     OP_OR
 } operator_type_t;
 
-// [SEQUENCE: MVP5-5]
+// [SEQUENCE: MVP3-5]
 // 파싱된 쿼리 정보를 담는 구조체
 typedef struct {
     char* keywords[10];          // 다중 키워드 배열
@@ -98,13 +98,13 @@ typedef struct {
     bool has_time_filter;
 } parsed_query_t;
 
-// [SEQUENCE: MVP5-6]
+// [SEQUENCE: MVP3-6]
 // 쿼리 파서 생명주기 및 파싱 함수
 parsed_query_t* query_parser_create(void);
 void query_parser_destroy(parsed_query_t* query);
 int query_parser_parse(parsed_query_t* query, const char* query_string);
 
-// [SEQUENCE: MVP5-7]
+// [SEQUENCE: MVP3-7]
 // 로그 항목이 쿼리 조건과 일치하는지 확인하는 함수
 bool query_matches_log(const parsed_query_t* query, const char* log_message, time_t timestamp);
 
@@ -116,14 +116,14 @@ bool query_matches_log(const parsed_query_t* query, const char* log_message, tim
 쿼리 파서의 핵심 로직을 구현합니다. `strtok_r`을 사용하여 쿼리 문자열을 토큰으로 분리하고, 각 `key=value` 쌍을 분석하여 `parsed_query_t` 구조체를 채웁니다.
 
 ```c
-// [SEQUENCE: MVP5-8]
+// [SEQUENCE: MVP3-8]
 #include "query_parser.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
 #include <strings.h> // for strcasecmp
 
-// [SEQUENCE: MVP5-9]
+// [SEQUENCE: MVP3-9]
 // parsed_query_t 구조체 생성 및 초기화
 parsed_query_t* query_parser_create(void) {
     parsed_query_t* query = calloc(1, sizeof(parsed_query_t));
@@ -133,7 +133,7 @@ parsed_query_t* query_parser_create(void) {
     return query;
 }
 
-// [SEQUENCE: MVP5-10]
+// [SEQUENCE: MVP3-10]
 // 파서가 할당한 모든 동적 메모리 해제
 void query_parser_destroy(parsed_query_t* query) {
     if (!query) return;
@@ -150,7 +150,7 @@ void query_parser_destroy(parsed_query_t* query) {
     free(query);
 }
 
-// [SEQUENCE: MVP5-11]
+// [SEQUENCE: MVP3-11]
 // 쿼리 문자열 파싱
 int query_parser_parse(parsed_query_t* query, const char* query_string) {
     if (!query || !query_string) return -1;
@@ -164,7 +164,7 @@ int query_parser_parse(parsed_query_t* query, const char* query_string) {
         params_str += 6;
     }
 
-    // [SEQUENCE: MVP5-12]
+    // [SEQUENCE: MVP3-12]
     // `strtok_r`을 사용하여 스페이스 기준으로 파라미터 분리 (스레드 안전)
     char* saveptr1;
     char* token = strtok_r(params_str, " ", &saveptr1);
@@ -175,7 +175,7 @@ int query_parser_parse(parsed_query_t* query, const char* query_string) {
             char* key = token;
             char* value = equals + 1;
 
-            // [SEQUENCE: MVP5-13]
+            // [SEQUENCE: MVP3-13]
             // 파라미터 종류에 따라 처리
             if (strcasecmp(key, "keywords") == 0 || strcasecmp(key, "keyword") == 0) {
                 char* saveptr2;
@@ -212,7 +212,7 @@ int query_parser_parse(parsed_query_t* query, const char* query_string) {
     return 0;
 }
 
-// [SEQUENCE: MVP5-14]
+// [SEQUENCE: MVP3-14]
 // 로그가 쿼리 조건에 부합하는지 검사
 bool query_matches_log(const parsed_query_t* query, const char* log_message, time_t timestamp) {
     // 시간 필터 검사
@@ -251,7 +251,7 @@ bool query_matches_log(const parsed_query_t* query, const char* log_message, tim
 고급 검색을 위한 `log_buffer_search_enhanced` 함수의 프로토타입을 추가합니다.
 
 ```c
-// [SEQUENCE: MVP5-15]
+// [SEQUENCE: MVP3-15]
 #ifndef LOG_BUFFER_H
 #define LOG_BUFFER_H
 
@@ -285,7 +285,7 @@ log_buffer_t* log_buffer_create(size_t capacity);
 void log_buffer_destroy(log_buffer_t* buffer);
 int log_buffer_push(log_buffer_t* buffer, const char* message);
 
-// [SEQUENCE: MVP5-16]
+// [SEQUENCE: MVP3-16]
 // MVP3에 추가된 고급 검색 함수
 int log_buffer_search_enhanced(log_buffer_t* buffer, const struct parsed_query* query, char*** results, int* count);
 
@@ -300,12 +300,12 @@ void log_buffer_get_stats(log_buffer_t* buffer, unsigned long* total, unsigned l
 `log_buffer_search_enhanced` 함수를 구현합니다. 이 함수는 `query_matches_log` 헬퍼 함수를 사용하여 각 로그 항목이 복잡한 쿼리 조건에 부합하는지 확인합니다.
 
 ```c
-// [SEQUENCE: MVP5-17]
+// [SEQUENCE: MVP3-17]
 // ... (log_buffer_create, push 등 기존 함수는 동일) ...
 
 #include "query_parser.h" // query_matches_log 사용을 위해 추가
 
-// [SEQUENCE: MVP5-18]
+// [SEQUENCE: MVP3-18]
 // 고급 검색 기능 구현
 int log_buffer_search_enhanced(log_buffer_t* buffer, const struct parsed_query* query, char*** results, int* count) {
     if (!buffer || !query || !results || !count) return -1;
@@ -362,7 +362,7 @@ int log_buffer_search_enhanced(log_buffer_t* buffer, const struct parsed_query* 
 `QUERY` 명령을 받았을 때, 새로 추가된 `QueryParser`를 사용하여 명령을 파싱하고, `log_buffer_search_enhanced`를 호출하도록 로직을 수정합니다. `HELP` 명령도 추가됩니다.
 
 ```c
-// [SEQUENCE: MVP5-19]
+// [SEQUENCE: MVP3-19]
 #include "query_handler.h"
 #include "server.h"
 #include "query_parser.h"
@@ -372,7 +372,7 @@ int log_buffer_search_enhanced(log_buffer_t* buffer, const struct parsed_query* 
 #include <unistd.h>
 #include <sys/socket.h>
 
-// [SEQUENCE: MVP5-20]
+// [SEQUENCE: MVP3-20]
 // HELP 명령에 대한 응답 생성
 static void send_help(int client_fd) {
     const char* help_msg = 
@@ -395,7 +395,7 @@ static void send_help(int client_fd) {
     send(client_fd, help_msg, strlen(help_msg), 0);
 }
 
-// [SEQUENCE: MVP5-21]
+// [SEQUENCE: MVP3-21]
 // 쿼리 명령 처리 로직 (MVP3 버전)
 static void process_query_command(log_server_t* server, int client_fd, const char* command) {
     char response[BUFFER_SIZE];
@@ -431,7 +431,7 @@ static void process_query_command(log_server_t* server, int client_fd, const cha
     }
 }
 
-// [SEQUENCE: MVP5-22]
+// [SEQUENCE: MVP3-22]
 // 쿼리 연결 수락 및 처리 (MVP2와 동일)
 void handle_query_connection(log_server_t* server) {
     // ... (MVP2와 동일한 로직)
@@ -443,7 +443,7 @@ void handle_query_connection(log_server_t* server) {
 고급 쿼리 기능을 테스트하기 위해 새로운 Python 테스트 스크립트(`tests/test_mvp3.py`)가 작성되었습니다. 이 스크립트는 정규식, 시간 범위, 다중 키워드 등 다양한 조합의 쿼리를 서버에 전송하고 결과를 검증합니다.
 
 ```python
-# [SEQUENCE: MVP5-23]
+# [SEQUENCE: MVP3-23]
 #!/usr/bin/env python3
 import socket
 import time

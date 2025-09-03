@@ -80,7 +80,7 @@ std::shared_ptr<IRCChannel> IRCChannelManager::getChannel(const std::string& nam
 // [SEQUENCE: 711] Join client to channel
 bool IRCChannelManager::joinChannel(std::shared_ptr<IRCClient> client, 
                                    const std::string& channelName, 
-                                   const std::string& key) {
+                                   const std::string& /*key*/) {
     if (!client || !client->isAuthenticated()) {
         return false;
     }

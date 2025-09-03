@@ -1,0 +1,8 @@
+/home/woopinbells/Desktop/gpt-00/log-caster-gemini/LogCrafter-CPP/build/CMakeFiles/logcaster-cpp.dir
+/home/woopinbells/Desktop/gpt-00/log-caster-gemini/LogCrafter-CPP/build/CMakeFiles/test.dir
+/home/woopinbells/Desktop/gpt-00/log-caster-gemini/LogCrafter-CPP/build/CMakeFiles/edit_cache.dir
+/home/woopinbells/Desktop/gpt-00/log-caster-gemini/LogCrafter-CPP/build/CMakeFiles/rebuild_cache.dir
+/home/woopinbells/Desktop/gpt-00/log-caster-gemini/LogCrafter-CPP/build/CMakeFiles/list_install_components.dir
+/home/woopinbells/Desktop/gpt-00/log-caster-gemini/LogCrafter-CPP/build/CMakeFiles/install.dir
+/home/woopinbells/Desktop/gpt-00/log-caster-gemini/LogCrafter-CPP/build/CMakeFiles/install/local.dir
+/home/woopinbells/Desktop/gpt-00/log-caster-gemini/LogCrafter-CPP/build/CMakeFiles/install/strip.dir

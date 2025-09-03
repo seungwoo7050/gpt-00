@@ -23,7 +23,7 @@ C++ 구현의 세 번째 단계(MVP3)는 C++의 강력한 표준 라이브러리
 `QueryParser` 클래스가 새로 추가됨에 따라, `CMakeLists.txt`의 소스 파일 목록에 `src/QueryParser.cpp`가 추가됩니다.
 
 ```cmake
-# [SEQUENCE: MVP6-1] 
+# [SEQUENCE: MVP3-1] 
 # CMake 최소 요구 버전 설정
 cmake_minimum_required(VERSION 3.10)
 
@@ -37,7 +37,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # 헤더 파일 경로 추가
 include_directories(include)
 
-# [SEQUENCE: MVP6-2]
+# [SEQUENCE: MVP3-2]
 # MVP3에 필요한 소스 파일 목록 (QueryParser.cpp 추가)
 set(SOURCES
     src/main.cpp
@@ -64,7 +64,7 @@ target_link_libraries(logcaster-cpp PRIVATE Threads::Threads)
 `std::optional`, `std::regex` 등 최신 C++ 기능을 사용하여 파싱된 쿼리 정보를 담는 `ParsedQuery` 클래스와, 이를 생성하는 `QueryParser` 클래스를 정의합니다.
 
 ```cpp
-// [SEQUENCE: MVP6-3]
+// [SEQUENCE: MVP3-3]
 #ifndef QUERYPARSER_H
 #define QUERYPARSER_H
 
@@ -76,14 +76,14 @@ target_link_libraries(logcaster-cpp PRIVATE Threads::Threads)
 #include <memory>
 #include "LogBuffer.h" // For LogEntry
 
-// [SEQUENCE: MVP6-4]
+// [SEQUENCE: MVP3-4]
 // 쿼리 연산자 종류
 enum class OperatorType {
     AND,
     OR
 };
 
-// [SEQUENCE: MVP6-5]
+// [SEQUENCE: MVP3-5]
 // 파싱된 쿼리 정보를 담는 클래스
 class ParsedQuery {
 public:
@@ -99,7 +99,7 @@ private:
     OperatorType op_ = OperatorType::AND;
 };
 
-// [SEQUENCE: MVP6-6]
+// [SEQUENCE: MVP3-6]
 // 쿼리 문자열을 파싱하는 정적 클래스
 class QueryParser {
 public:
@@ -114,13 +114,13 @@ public:
 `QueryParser`의 파싱 로직과 `ParsedQuery`의 매칭 로직을 구현합니다. `std::stringstream`을 사용하여 문자열을 안전하게 처리하고, `std::regex` 생성 시 발생할 수 있는 예외를 처리합니다.
 
 ```cpp
-// [SEQUENCE: MVP6-7]
+// [SEQUENCE: MVP3-7]
 #include "QueryParser.h"
 #include <sstream>
 #include <algorithm>
 #include <iostream>
 
-// [SEQUENCE: MVP6-8]
+// [SEQUENCE: MVP3-8]
 // 쿼리 문자열을 파싱하여 ParsedQuery 객체를 생성
 std::unique_ptr<ParsedQuery> QueryParser::parse(const std::string& query_string) {
     auto parsed_query = std::make_unique<ParsedQuery>();
@@ -142,7 +142,7 @@ std::unique_ptr<ParsedQuery> QueryParser::parse(const std::string& query_string)
         std::string key = seg.substr(0, pos);
         std::string value = seg.substr(pos + 1);
 
-        // [SEQUENCE: MVP6-9]
+        // [SEQUENCE: MVP3-9]
         // 각 파라미터에 맞게 값 설정
         if (key == "keywords" || key == "keyword") {
             std::stringstream v_ss(value);
@@ -170,7 +170,7 @@ std::unique_ptr<ParsedQuery> QueryParser::parse(const std::string& query_string)
     return parsed_query;
 }
 
-// [SEQUENCE: MVP6-10]
+// [SEQUENCE: MVP3-10]
 // 로그가 쿼리 조건에 부합하는지 검사
 bool ParsedQuery::matches(const std::string& message, const std::chrono::system_clock::time_point& timestamp) const {
     // 시간 필터
@@ -208,7 +208,7 @@ bool ParsedQuery::matches(const std::string& message, const std::chrono::system_
 `ParsedQuery`를 사용하는 `searchEnhanced` 메소드의 선언을 추가합니다.
 
 ```cpp
-// [SEQUENCE: MVP6-11]
+// [SEQUENCE: MVP3-11]
 #ifndef LOGBUFFER_H
 #define LOGBUFFER_H
 
@@ -221,7 +221,7 @@ class LogBuffer {
 public:
     // ... (기존 메소드 선언은 동일)
 
-    // [SEQUENCE: MVP6-12]
+    // [SEQUENCE: MVP3-12]
     // MVP3에 추가된 고급 검색 메소드
     std::vector<std::string> searchEnhanced(const ParsedQuery& query) const;
 
@@ -237,7 +237,7 @@ private:
 `ParsedQuery`의 `matches` 메소드를 호출하여 고급 검색을 수행하는 `searchEnhanced`를 구현합니다.
 
 ```cpp
-// [SEQUENCE: MVP6-13]
+// [SEQUENCE: MVP3-13]
 #include "LogBuffer.h"
 #include "QueryParser.h"
 #include <sstream>
@@ -245,13 +245,13 @@ private:
 
 // ... (push, search 등 기존 함수는 동일) ...
 
-// [SEQUENCE: MVP6-14]
+// [SEQUENCE: MVP3-14]
 // 고급 검색 기능 구현
 std::vector<std::string> LogBuffer::searchEnhanced(const ParsedQuery& query) const {
     std::lock_guard<std::mutex> lock(mutex_);
     std::vector<std::string> results;
     for (const auto& entry : buffer_) {
-        // [SEQUENCE: MVP6-15]
+        // [SEQUENCE: MVP3-15]
         // ParsedQuery 객체에 매칭 로직 위임
         if (query.matches(entry.message, entry.timestamp)) {
             auto time_t = std::chrono::system_clock::to_time_t(entry.timestamp);
@@ -270,14 +270,14 @@ std::vector<std::string> LogBuffer::searchEnhanced(const ParsedQuery& query) con
 `QUERY` 명령을 처리할 때 `QueryParser`를 사용하도록 로직을 수정하고, `HELP` 명령의 내용을 보강합니다.
 
 ```cpp
-// [SEQUENCE: MVP6-16]
+// [SEQUENCE: MVP3-16]
 #include "QueryHandler.h"
 #include "QueryParser.h"
 #include <sstream>
 
 // ... (생성자는 동일) ...
 
-// [SEQUENCE: MVP6-17]
+// [SEQUENCE: MVP3-17]
 // 쿼리 처리 로직 (MVP3 버전)
 std::string QueryHandler::processQuery(const std::string& query) {
     if (query.find("QUERY") == 0) {
@@ -292,18 +292,18 @@ std::string QueryHandler::processQuery(const std::string& query) {
     return "ERROR: Unknown command. Use HELP for usage.\n";
 }
 
-// [SEQUENCE: MVP6-18]
+// [SEQUENCE: MVP3-18]
 // 검색 쿼리 처리 로직 수정
 std::string QueryHandler::handleSearch(const std::string& query) {
     try {
-        // [SEQUENCE: MVP6-19]
+        // [SEQUENCE: MVP3-19]
         // QueryParser를 사용하여 쿼리 문자열을 파싱
         auto parsed_query = QueryParser::parse(query);
         if (!parsed_query) {
             return "ERROR: Failed to parse query.\n";
         }
 
-        // [SEQUENCE: MVP6-20]
+        // [SEQUENCE: MVP3-20]
         // LogBuffer의 고급 검색 메소드 호출
         auto results = buffer_->searchEnhanced(*parsed_query);
         std::stringstream ss;
@@ -319,7 +319,7 @@ std::string QueryHandler::handleSearch(const std::string& query) {
 
 // ... (handleStats, handleCount는 동일) ...
 
-// [SEQUENCE: MVP6-21]
+// [SEQUENCE: MVP3-21]
 // HELP 명령 내용 보강
 std::string QueryHandler::handleHelp() {
     return "Available commands:\n"
@@ -344,7 +344,7 @@ std::string QueryHandler::handleHelp() {
 C 버전 MVP3의 테스트 코드(`tests/test_mvp3.py`)를 C++ 서버에 맞게 약간 수정하여 사용합니다. 프로토콜은 동일하므로 대부분의 로직을 재사용할 수 있습니다.
 
 ```python
-# [SEQUENCE: MVP6-22]
+# [SEQUENCE: MVP3-22]
 #!/usr/bin/env python3
 import socket
 import time

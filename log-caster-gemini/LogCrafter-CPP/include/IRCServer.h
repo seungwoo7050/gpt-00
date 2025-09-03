@@ -1,3 +1,13 @@
+// [HISTORICAL NOTE for C++ MVP6]
+// This entire IRC module, including the IRCServer, IRCClient, IRCChannel,
+// and related manager/handler classes, was introduced in the sixth C++ MVP.
+// This major feature added the capability to monitor logs in real-time
+// by subscribing to channels with a standard IRC client.
+//
+// To see the original specification for this module, please refer to:
+// - Document: /devhistory/DevHistory/DevHistory11.md
+// - Sequences: [SEQUENCE: MVP6-3] through [SEQUENCE: MVP6-17]
+
 #pragma once
 
 #include <atomic>

@@ -12,6 +12,15 @@ static void sigint_handler(int sig) {
     }
 }
 
+// [HISTORICAL NOTE for MVP1]
+// This function did not exist in MVP1. The logic for reading data from a client
+// socket was originally located inside the main for-loop within the server_run
+// function.
+//
+// To see the original MVP1 source code for that logic, please refer to:
+// - Document: /devhistory/DevHistory/DevHistory01.md
+// - Sequences: [SEQUENCE: MVP1-20] through [SEQUENCE: MVP1-22]
+
 // [SEQUENCE: 132] Thread pool job function for client handling
 static void handle_client_job(void* arg) {
     client_job_t* job = (client_job_t*)arg;
@@ -56,6 +65,15 @@ static void handle_client_job(void* arg) {
     // [SEQUENCE: 136] Cleanup client connection
     close(job->client_fd);
     
+    // [HISTORICAL NOTE for MVP5]
+    // The mutex lock/unlock around the client_count decrement was added in MVP5
+    // to fix a race condition where multiple threads could try to modify the
+    // counter simultaneously, leading to an incorrect client count.
+    //
+    // To see the original specification for this fix, please refer to:
+    // - Document: /devhistory/DevHistory/DevHistory09.md
+    // - Sequence: [SEQUENCE: MVP5-6]
+
     // [SEQUENCE: 403] Thread-safe client count decrement
     pthread_mutex_lock(&job->server->client_count_mutex);
     job->server->client_count--;
@@ -212,6 +230,19 @@ int server_init(log_server_t* server) {
     return 0;
 }
 
+
+// [HISTORICAL NOTE for MVP1]
+// The server_run function was the heart of the MVP1 implementation. It contained a
+// single loop with select() that was responsible for accepting new connections AND
+// reading data from all existing clients within a single thread.
+//
+// In MVP2, this function was refactored. The select() loop now only listens for
+// new connections, which are then passed off to a thread pool for handling.
+// The logic for reading client data was moved into the handle_client_job function.
+//
+// To see the original MVP1 source code for this entire function, please refer to:
+// - Document: /devhistory/DevHistory/DevHistory01.md
+// - Sequence: [SEQUENCE: MVP1-14]
 void server_run(log_server_t* server) {
     struct timeval tv;
     int select_ret;

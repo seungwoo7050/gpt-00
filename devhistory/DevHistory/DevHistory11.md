@@ -22,10 +22,10 @@ C++ 구현의 마지막 단계(MVP6)는 `DEVELOPMENT_JOURNAL.md`에는 기록되
 다수의 IRC 관련 소스 파일들이 `CMakeLists.txt`에 추가됩니다.
 
 ```cmake
-# [SEQUENCE: MVP11-1]
+# [SEQUENCE: MVP6-1]
 # ... (project, CMAKE_CXX_STANDARD 등은 이전과 동일) ...
 
-# [SEQUENCE: MVP11-2]
+# [SEQUENCE: MVP6-2]
 # MVP6에 필요한 전체 소스 파일 목록 (IRC 모듈 추가)
 set(SOURCES
     src/main.cpp
@@ -64,7 +64,7 @@ set(SOURCES
 
 **핵심 로직 예시 (`src/IRCCommandHandler.cpp`의 JOIN 명령 처리):**
 ```cpp
-// [SEQUENCE: MVP11-3]
+// [SEQUENCE: MVP6-3]
 void IRCCommandHandler::handleJoin(const IRCCommand& command) {
     // ... (클라이언트 정보 가져오기)
     std::string channel_name = command.get_params()[0];
@@ -75,7 +75,7 @@ void IRCCommandHandler::handleJoin(const IRCCommand& command) {
 
     // ... (JOIN 성공 응답 클라이언트에 전송)
 
-    // [SEQUENCE: MVP11-4]
+    // [SEQUENCE: MVP6-4]
     // LogBuffer에 콜백 등록으로 로그 구독
     std::string pattern = channel_name.substr(1); // # 제거
     log_buffer_->registerChannelCallback(pattern, [channel](const LogEntry& entry) {
@@ -91,7 +91,7 @@ void IRCCommandHandler::handleJoin(const IRCCommand& command) {
 구조화된 로그를 위한 `LogEntry` 확장 및 IRC 연동을 위한 콜백 인터페이스를 추가합니다.
 
 ```cpp
-// [SEQUENCE: MVP11-5]
+// [SEQUENCE: MVP6-5]
 #ifndef LOGBUFFER_H
 #define LOGBUFFER_H
 
@@ -99,7 +99,7 @@ void IRCCommandHandler::handleJoin(const IRCCommand& command) {
 #include <map> // for std::map
 // ... (기존 include)
 
-// [SEQUENCE: MVP11-6]
+// [SEQUENCE: MVP6-6]
 // 구조화된 로그 항목 (IRC 통합 버전)
 struct LogEntry {
     std::string message;
@@ -119,7 +119,7 @@ class LogBuffer {
 public:
     // ... (기존 public 메소드)
 
-    // [SEQUENCE: MVP11-7]
+    // [SEQUENCE: MVP6-7]
     // MVP6 추가: IRC 연동을 위한 메소드
     void addLogWithNotification(const LogEntry& entry);
     void registerChannelCallback(const std::string& pattern, std::function<void(const LogEntry&)> callback);
@@ -128,7 +128,7 @@ public:
 private:
     // ... (기존 private 멤버)
 
-    // [SEQUENCE: MVP11-8]
+    // [SEQUENCE: MVP6-8]
     // MVP6 추가: 콜백 저장을 위한 맵
     std::map<std::string, std::vector<std::function<void(const LogEntry&)>>> channelCallbacks_;
 };
@@ -141,10 +141,10 @@ private:
 `addLogWithNotification` 메소드에서 로그를 저장한 후, 등록된 콜백들을 실행하여 IRC 채널에 알림을 보내는 로직을 구현합니다.
 
 ```cpp
-// [SEQUENCE: MVP11-9]
+// [SEQUENCE: MVP6-9]
 // ... (기존 함수들)
 
-// [SEQUENCE: MVP11-10]
+// [SEQUENCE: MVP6-10]
 // 로그 추가 및 알림 처리
 void LogBuffer::addLogWithNotification(const LogEntry& entry) {
     {
@@ -157,7 +157,7 @@ void LogBuffer::addLogWithNotification(const LogEntry& entry) {
     }
     notEmpty_.notify_one();
 
-    // [SEQUENCE: MVP11-11]
+    // [SEQUENCE: MVP6-11]
     // 등록된 콜백 실행하여 알림 전송
     std::lock_guard<std::mutex> lock(mutex_);
     for (const auto& [pattern, callbacks] : channelCallbacks_) {
@@ -172,7 +172,7 @@ void LogBuffer::addLogWithNotification(const LogEntry& entry) {
     }
 }
 
-// [SEQUENCE: MVP11-12]
+// [SEQUENCE: MVP6-12]
 // 콜백 등록 및 해제 함수 구현
 void LogBuffer::registerChannelCallback(const std::string& pattern, std::function<void(const LogEntry&)> callback) {
     std::lock_guard<std::mutex> lock(mutex_);
@@ -190,13 +190,13 @@ void LogBuffer::unregisterChannelCallback(const std::string& pattern) {
 `main` 함수에서 `IRCServer`가 `LogBuffer`에 접근할 수 있도록 `getLogBuffer` 메소드를 추가합니다.
 
 ```cpp
-// [SEQUENCE: MVP11-13]
+// [SEQUENCE: MVP6-13]
 class LogServer {
 public:
     // ... (기존 public 메소드)
     void setPersistenceManager(std::unique_ptr<PersistenceManager> persistence);
 
-    // [SEQUENCE: MVP11-14]
+    // [SEQUENCE: MVP6-14]
     // MVP6 추가: IRC 서버와의 연동을 위해 LogBuffer 공유
     std::shared_ptr<LogBuffer> getLogBuffer() const { return logBuffer_; }
 
@@ -210,7 +210,7 @@ private:
 IRC 서버를 활성화하는 커맨드 라인 인자(`-i`, `-I`)를 처리하고, `IRCServer`를 생성 및 실행하는 로직을 추가합니다.
 
 ```cpp
-// [SEQUENCE: MVP11-15]
+// [SEQUENCE: MVP6-15]
 #include "LogServer.h"
 #include "IRCServer.h"
 #include <iostream>
@@ -233,7 +233,7 @@ int main(int argc, char* argv[]) {
     int irc_port = 6667;
     // ... (영속성 설정 변수)
 
-    // [SEQUENCE: MVP11-16]
+    // [SEQUENCE: MVP6-16]
     // getopt 파싱 루프에 'i'와 'I:' 옵션 추가
     while ((opt = getopt(argc, argv, "p:d:s:PiI:h")) != -1) {
         switch (opt) {
@@ -253,7 +253,7 @@ int main(int argc, char* argv[]) {
         g_logServer = std::make_unique<LogServer>(port);
         // ... (영속성 관리자 설정)
 
-        // [SEQUENCE: MVP11-17]
+        // [SEQUENCE: MVP6-17]
         // IRC 서버 생성 및 별도 스레드에서 실행
         if (irc_enabled) {
             g_ircServer = std::make_unique<IRCServer>(irc_port, g_logServer->getLogBuffer());

@@ -1,3 +1,12 @@
+// [HISTORICAL NOTE for MVP2]
+// This entire file and the corresponding header (`thread_pool.h`) were
+// introduced as part of MVP2 to replace the single-threaded client handling
+// model from MVP1. This thread pool is the core of the new concurrency model.
+//
+// To see the original specification for this module, please refer to:
+// - Document: /devhistory/DevHistory/DevHistory03.md
+// - Sequences: [SEQUENCE: MVP2-2] through [SEQUENCE: MVP2-17]
+
 #include "thread_pool.h"
 #include <stdlib.h>
 #include <stdio.h>

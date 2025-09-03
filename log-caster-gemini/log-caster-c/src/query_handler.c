@@ -1,3 +1,13 @@
+// [HISTORICAL NOTE for MVP2]
+// This file and its header were introduced in MVP2 to handle commands
+// sent to a new, separate query port (9998). This allowed for basic
+// introspection of the server's state, such as getting stats and
+// performing simple keyword searches in the log buffer.
+//
+// To see the original specification for this module, please refer to:
+// - Document: /devhistory/DevHistory/DevHistory03.md
+// - Sequences: [SEQUENCE: MVP2-32] through [SEQUENCE: MVP2-35]
+
 #include "query_handler.h"
 #include "query_parser.h"
 #include <string.h>
@@ -76,6 +86,16 @@ static void send_help(int client_fd) {
     
     send(client_fd, help_msg, strlen(help_msg), 0);
 }
+
+// [HISTORICAL NOTE for MVP3]
+// This function was significantly upgraded in MVP3. The original MVP2 version
+// only handled basic STATS, COUNT, and a simple keyword search. This version
+// was refactored to use the new QueryParser module to handle complex queries
+// with regex, time filters, and more. The HELP command was also added.
+//
+// To see the original specification for this function's update, please refer to:
+// - Document: /devhistory/DevHistory/DevHistory05.md
+// - Sequence: [SEQUENCE: MVP3-21]
 
 // [SEQUENCE: 127] Process query command - MVP3 version
 void process_query_command(log_server_t* server, int client_fd, const char* command) {

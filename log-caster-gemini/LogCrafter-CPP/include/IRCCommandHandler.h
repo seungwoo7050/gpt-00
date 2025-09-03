@@ -10,7 +10,7 @@
 class IRCServer;
 class IRCClient;
 class IRCChannel;
-class LogBuffer;
+#include "LogBuffer.h"
 
 // [SEQUENCE: 556] IRC Command Handler - processes parsed IRC commands
 class IRCCommandHandler {

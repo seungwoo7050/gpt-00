@@ -19,7 +19,7 @@ C++ 구현의 다섯 번째 단계(MVP5)는 C 버전의 MVP5와 마찬가지로,
 `LogServer` 클래스 내부에 로그 메시지의 최대 허용 길이를 나타내는 상수를 추가합니다.
 
 ```cpp
-// [SEQUENCE: MVP10-1]
+// [SEQUENCE: MVP5-1]
 #ifndef LOGSERVER_H
 #define LOGSERVER_H
 
@@ -30,7 +30,7 @@ class LogServer {
 public:
     // ... (기존 public 메소드는 MVP4와 동일)
 
-    // [SEQUENCE: MVP10-2]
+    // [SEQUENCE: MVP5-2]
     // MVP5 추가: 안전한 로그 길이를 위한 상수
     static constexpr size_t SAFE_LOG_LENGTH = 1024;
 
@@ -46,13 +46,13 @@ private:
 `handleClientTask` 메소드에서 `recv`로 데이터를 수신한 후, 해당 데이터의 길이를 `SAFE_LOG_LENGTH`와 비교하여 초과 시 절단하는 로직을 추가합니다.
 
 ```cpp
-// [SEQUENCE: MVP10-3]
+// [SEQUENCE: MVP5-3]
 #include "LogServer.h"
 // ... (다른 include는 MVP4와 동일)
 
 // ... (생성자, 소멸자, start, stop, initialize, runEventLoop, handleNewConnection 등은 MVP4와 동일)
 
-// [SEQUENCE: MVP10-4]
+// [SEQUENCE: MVP5-4]
 // 로그 클라이언트 작업 (MVP5 버전)
 void LogServer::handleClientTask(int client_fd) {
     char buffer[4096]; // 수신을 위한 물리적 버퍼
@@ -60,7 +60,7 @@ void LogServer::handleClientTask(int client_fd) {
         ssize_t nbytes = recv(client_fd, buffer, sizeof(buffer) - 1, 0);
         if (nbytes <= 0) break;
         
-        // [SEQUENCE: MVP10-5]
+        // [SEQUENCE: MVP5-5]
         // 수신된 데이터로 std::string 생성 및 크기 검증
         std::string log_message(buffer, nbytes);
         if (log_message.length() > SAFE_LOG_LENGTH) {

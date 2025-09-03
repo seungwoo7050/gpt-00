@@ -21,10 +21,10 @@ C++ 구현의 네 번째 단계(MVP4)는 C++의 현대적인 기능들을 사용
 `Persistence.cpp`가 소스 목록에 추가되고, 구형 컴파일러에서 `<filesystem>`을 지원하기 위한 조건부 라이브러리 링크 설정이 추가됩니다.
 
 ```cmake
-# [SEQUENCE: MVP8-1]
+# [SEQUENCE: MVP4-1]
 # ... (project, CMAKE_CXX_STANDARD 등은 MVP6와 동일) ...
 
-# [SEQUENCE: MVP8-2]
+# [SEQUENCE: MVP4-2]
 # MVP4에 필요한 소스 파일 목록 (Persistence.cpp 추가)
 set(SOURCES
     src/main.cpp
@@ -41,7 +41,7 @@ add_executable(logcaster-cpp ${SOURCES})
 
 target_link_libraries(logcaster-cpp PRIVATE Threads::Threads)
 
-# [SEQUENCE: MVP8-3]
+# [SEQUENCE: MVP4-3]
 # 구형 GCC/G++ 컴파일러를 위한 stdc++fs 라이브러리 링크
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 9.0)
     target_link_libraries(logcaster-cpp PRIVATE stdc++fs)
@@ -55,7 +55,7 @@ endif()
 영속성 관리자를 위한 설정 구조체(`PersistenceConfig`)와 메인 클래스(`PersistenceManager`)를 정의합니다.
 
 ```cpp
-// [SEQUENCE: MVP8-4]
+// [SEQUENCE: MVP4-4]
 #ifndef PERSISTENCE_H
 #define PERSISTENCE_H
 
@@ -69,7 +69,7 @@ endif()
 #include <chrono>
 #include <filesystem>
 
-// [SEQUENCE: MVP8-5]
+// [SEQUENCE: MVP4-5]
 // 영속성 설정을 위한 구조체
 struct PersistenceConfig {
     bool enabled = false;
@@ -78,7 +78,7 @@ struct PersistenceConfig {
     std::chrono::milliseconds flush_interval = std::chrono::milliseconds(1000);
 };
 
-// [SEQUENCE: MVP8-6]
+// [SEQUENCE: MVP4-6]
 // 영속성 관리자 클래스
 class PersistenceManager {
 public:
@@ -114,12 +114,12 @@ private:
 `PersistenceManager`의 핵심 로직을 구현합니다. 생성자에서 스레드를 시작하고, 소멸자에서 스레드를 안전하게 종료하며, 비동기 쓰기 및 파일 로테이션을 처리합니다.
 
 ```cpp
-// [SEQUENCE: MVP8-7]
+// [SEQUENCE: MVP4-7]
 #include "Persistence.h"
 #include <iostream>
 #include <iomanip>
 
-// [SEQUENCE: MVP8-8]
+// [SEQUENCE: MVP4-8]
 // 생성자: 디렉토리 생성, 파일 열기, Writer 스레드 시작
 PersistenceManager::PersistenceManager(const PersistenceConfig& config)
     : config_(config), running_(true) {
@@ -140,7 +140,7 @@ PersistenceManager::PersistenceManager(const PersistenceConfig& config)
     }
 }
 
-// [SEQUENCE: MVP8-9]
+// [SEQUENCE: MVP4-9]
 // 소멸자: Writer 스레드의 안전한 종료 보장 (RAII)
 PersistenceManager::~PersistenceManager() {
     if (!config_.enabled || !running_) return;
@@ -155,7 +155,7 @@ PersistenceManager::~PersistenceManager() {
     }
 }
 
-// [SEQUENCE: MVP8-10]
+// [SEQUENCE: MVP4-10]
 // 외부에서 로그 쓰기를 요청하는 API
 void PersistenceManager::write(const std::string& message) {
     if (!config_.enabled) return;
@@ -166,7 +166,7 @@ void PersistenceManager::write(const std::string& message) {
     condition_.notify_one();
 }
 
-// [SEQUENCE: MVP8-11]
+// [SEQUENCE: MVP4-11]
 // Writer 스레드의 메인 루프
 void PersistenceManager::writerThread() {
     while (running_ || !write_queue_.empty()) {
@@ -195,7 +195,7 @@ void PersistenceManager::writerThread() {
     }
 }
 
-// [SEQUENCE: MVP8-12]
+// [SEQUENCE: MVP4-12]
 // 로그 파일 로테이션
 void PersistenceManager::rotateFile() {
     log_file_.close();
@@ -220,7 +220,7 @@ void PersistenceManager::rotateFile() {
 `PersistenceManager`를 소유하고 관리하기 위한 포인터와 설정 메소드를 추가합니다.
 
 ```cpp
-// [SEQUENCE: MVP8-13]
+// [SEQUENCE: MVP4-13]
 #ifndef LOGSERVER_H
 #define LOGSERVER_H
 
@@ -231,7 +231,7 @@ class LogServer {
 public:
     // ... (기존 public 메소드)
 
-    // [SEQUENCE: MVP8-14]
+    // [SEQUENCE: MVP4-14]
     // PersistenceManager를 주입하기 위한 메소드
     void setPersistenceManager(std::unique_ptr<PersistenceManager> persistence);
 
@@ -241,7 +241,7 @@ private:
     // ... (기존 멤버 변수)
     std::unique_ptr<QueryHandler> queryHandler_;
 
-    // [SEQUENCE: MVP8-15]
+    // [SEQUENCE: MVP4-15]
     // MVP4 추가 사항
     std::unique_ptr<PersistenceManager> persistence_;
 };
@@ -254,10 +254,10 @@ private:
 클라이언트 처리 로직에서 `PersistenceManager`의 `write` 메소드를 호출하도록 수정합니다.
 
 ```cpp
-// [SEQUENCE: MVP8-16]
+// [SEQUENCE: MVP4-16]
 // ... (include 및 생성자 등은 동일)
 
-// [SEQUENCE: MVP8-17]
+// [SEQUENCE: MVP4-17]
 // 클라이언트 작업 핸들러 (MVP4 버전)
 void LogServer::handleClientTask(int client_fd) {
     char buffer[4096];
@@ -270,7 +270,7 @@ void LogServer::handleClientTask(int client_fd) {
         // 1. 인메모리 버퍼에 저장
         logBuffer_->push(log_message);
 
-        // [SEQUENCE: MVP8-18]
+        // [SEQUENCE: MVP4-18]
         // 2. 영속성 관리자에게 쓰기 요청 (활성화된 경우)
         if (persistence_) {
             persistence_->write(log_message);
@@ -279,7 +279,7 @@ void LogServer::handleClientTask(int client_fd) {
     close(client_fd);
 }
 
-// [SEQUENCE: MVP8-19]
+// [SEQUENCE: MVP4-19]
 // PersistenceManager 설정 메소드 구현
 void LogServer::setPersistenceManager(std::unique_ptr<PersistenceManager> persistence) {
     persistence_ = std::move(persistence);
@@ -293,7 +293,7 @@ void LogServer::setPersistenceManager(std::unique_ptr<PersistenceManager> persis
 `getopt`를 사용하여 영속성 관련 커맨드 라인 인자를 파싱하고, `PersistenceManager`를 생성하여 `LogServer`에 주입하는 로직이 추가됩니다.
 
 ```cpp
-// [SEQUENCE: MVP8-20]
+// [SEQUENCE: MVP4-20]
 #include "LogServer.h"
 #include "Persistence.h"
 #include <iostream>
@@ -303,7 +303,7 @@ int main(int argc, char* argv[]) {
     int port = 9999;
     PersistenceConfig persist_config;
 
-    // [SEQUENCE: MVP8-21]
+    // [SEQUENCE: MVP4-21]
     // 커맨드 라인 인자 파싱
     int opt;
     while ((opt = getopt(argc, argv, "p:d:s:Ph")) != -1) {
@@ -321,7 +321,7 @@ int main(int argc, char* argv[]) {
     try {
         LogServer server(port);
 
-        // [SEQUENCE: MVP8-22]
+        // [SEQUENCE: MVP4-22]
         // 영속성 관리자 생성 및 주입
         if (persist_config.enabled) {
             auto persistence = std::make_unique<PersistenceManager>(persist_config);

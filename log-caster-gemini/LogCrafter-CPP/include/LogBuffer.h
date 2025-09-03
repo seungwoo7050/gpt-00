@@ -1,3 +1,12 @@
+// [HISTORICAL NOTE for C++ MVP2]
+// This LogBuffer, based on std::deque, was introduced in the second C++ MVP.
+// It provided a thread-safe, in-memory storage for logs, replacing the
+// simple stdout printing from the first C++ MVP.
+//
+// To see the original specification for this module, please refer to:
+// - Document: /devhistory/DevHistory/DevHistory04.md
+// - Sequences: [SEQUENCE: MVP2-14] through [SEQUENCE: MVP2-22]
+
 #ifndef LOGBUFFER_H
 #define LOGBUFFER_H
 

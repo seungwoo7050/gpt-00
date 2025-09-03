@@ -1,3 +1,13 @@
+// [HISTORICAL NOTE for MVP4]
+// This persistence module was introduced in MVP4 to save logs to disk,
+// a major feature turning the server into a reliable data store.
+// It uses a dedicated writer thread to handle file I/O asynchronously,
+// minimizing the performance impact on the main logging threads.
+//
+// To see the original specification for this module, please refer to:
+// - Document: /devhistory/DevHistory/DevHistory07.md
+// - Sequences: [SEQUENCE: MVP4-3] through [SEQUENCE: MVP4-15]
+
 #include "persistence.h"
 #include <stdio.h>
 #include <stdlib.h>

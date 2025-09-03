@@ -7,7 +7,7 @@
 #include <vector>
 #include <functional>
 
-class IRCChannel;
+#include "IRCChannel.h"
 class IRCClient;
 struct LogEntry;
 

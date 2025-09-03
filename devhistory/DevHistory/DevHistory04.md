@@ -21,7 +21,7 @@ C++ 구현의 두 번째 단계(MVP2)는 C++의 최신 기능들을 본격적으
 MVP2에서는 `ThreadPool`, `LogBuffer`, `QueryHandler` 클래스가 추가됨에 따라, `CMakeLists.txt`의 소스 파일 목록이 업데이트됩니다.
 
 ```cmake
-# [SEQUENCE: MVP4-1]
+# [SEQUENCE: MVP2-1]
 # CMake 최소 요구 버전 설정
 cmake_minimum_required(VERSION 3.10)
 
@@ -38,7 +38,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Werror -pedantic")
 # 헤더 파일 경로 추가
 include_directories(include)
 
-# [SEQUENCE: MVP4-2]
+# [SEQUENCE: MVP2-2]
 # MVP2에 필요한 소스 파일 목록
 set(SOURCES
     src/main.cpp
@@ -52,7 +52,7 @@ set(SOURCES
 # 실행 파일 생성
 add_executable(logcaster-cpp ${SOURCES})
 
-# [SEQUENCE: MVP4-3]
+# [SEQUENCE: MVP2-3]
 # 스레드 라이브러리 링크
 find_package(Threads REQUIRED)
 target_link_libraries(logcaster-cpp PRIVATE Threads::Threads)
@@ -65,7 +65,7 @@ target_link_libraries(logcaster-cpp PRIVATE Threads::Threads)
 C++11 표준 라이브러리를 사용하여 구현된 헤더 전용(header-only) 스레드 풀입니다. 템플릿을 사용하여 어떤 형태의 함수든 인자와 함께 작업 큐에 추가하고, `std::future`를 통해 결과값을 비동기적으로 받을 수 있습니다.
 
 ```cpp
-// [SEQUENCE: MVP4-4]
+// [SEQUENCE: MVP2-4]
 #ifndef THREADPOOL_H
 #define THREADPOOL_H
 
@@ -79,7 +79,7 @@ C++11 표준 라이브러리를 사용하여 구현된 헤더 전용(header-only
 #include <memory>
 #include <stdexcept>
 
-// [SEQUENCE: MVP4-5]
+// [SEQUENCE: MVP2-5]
 class ThreadPool {
 public:
     explicit ThreadPool(size_t numThreads = std::thread::hardware_concurrency());
@@ -88,7 +88,7 @@ public:
     ThreadPool(const ThreadPool&) = delete;
     ThreadPool& operator=(const ThreadPool&) = delete;
 
-    // [SEQUENCE: MVP4-6]
+    // [SEQUENCE: MVP2-6]
     // 작업을 큐에 추가하는 템플릿 함수
     template<typename F, typename... Args>
     auto enqueue(F&& f, Args&&... args) -> std::future<typename std::result_of<F(Args...)>::type>;
@@ -104,13 +104,13 @@ private:
     bool stop_;
 };
 
-// [SEQUENCE: MVP4-7]
+// [SEQUENCE: MVP2-7]
 // enqueue 멤버 함수의 템플릿 구현
 template<typename F, typename... Args>
 auto ThreadPool::enqueue(F&& f, Args&&... args) -> std::future<typename std::result_of<F(Args...)>::type> {
     using return_type = typename std::result_of<F(Args...)>::type;
 
-    // [SEQUENCE: MVP4-8]
+    // [SEQUENCE: MVP2-8]
     // 작업을 std::packaged_task로 래핑하여 future를 얻음
     auto task = std::make_shared<std::packaged_task<return_type()>>(
         std::bind(std::forward<F>(f), std::forward<Args>(args)...)
@@ -136,10 +136,10 @@ auto ThreadPool::enqueue(F&& f, Args&&... args) -> std::future<typename std::res
 스레드 풀의 생성자, 소멸자 및 작업자 스레드의 실행 로직을 구현합니다.
 
 ```cpp
-// [SEQUENCE: MVP4-9]
+// [SEQUENCE: MVP2-9]
 #include "ThreadPool.h"
 
-// [SEQUENCE: MVP4-10]
+// [SEQUENCE: MVP2-10]
 // 생성자: 작업자 스레드를 생성하고 실행 시작
 ThreadPool::ThreadPool(size_t numThreads) : stop_(false) {
     workers_.reserve(numThreads);
@@ -148,7 +148,7 @@ ThreadPool::ThreadPool(size_t numThreads) : stop_(false) {
     }
 }
 
-// [SEQUENCE: MVP4-11]
+// [SEQUENCE: MVP2-11]
 // 소멸자: 모든 스레드가 안전하게 종료되도록 보장
 ThreadPool::~ThreadPool() {
     {
@@ -163,14 +163,14 @@ ThreadPool::~ThreadPool() {
     }
 }
 
-// [SEQUENCE: MVP4-12]
+// [SEQUENCE: MVP2-12]
 // 작업자 스레드의 메인 루프
 void ThreadPool::workerThread() {
     while (true) {
         std::function<void()> task;
         {
             std::unique_lock<std::mutex> lock(queue_mutex_);
-            // [SEQUENCE: MVP4-13]
+            // [SEQUENCE: MVP2-13]
             // 작업이 있거나, 종료 신호가 올 때까지 대기
             condition_.wait(lock, [this] { return stop_ || !tasks_.empty(); });
             if (stop_ && tasks_.empty()) {
@@ -189,7 +189,7 @@ void ThreadPool::workerThread() {
 `std::deque`를 내부 컨테이너로 사용하는 스레드 안전 로그 버퍼를 정의합니다.
 
 ```cpp
-// [SEQUENCE: MVP4-14]
+// [SEQUENCE: MVP2-14]
 #ifndef LOGBUFFER_H
 #define LOGBUFFER_H
 
@@ -200,7 +200,7 @@ void ThreadPool::workerThread() {
 #include <vector>
 #include <atomic>
 
-// [SEQUENCE: MVP4-15]
+// [SEQUENCE: MVP2-15]
 // 로그 항목 구조체 (MVP2 버전)
 struct LogEntry {
     std::string message;
@@ -210,7 +210,7 @@ struct LogEntry {
         : message(std::move(msg)), timestamp(std::chrono::system_clock::now()) {}
 };
 
-// [SEQUENCE: MVP4-16]
+// [SEQUENCE: MVP2-16]
 // 로그 버퍼 클래스
 class LogBuffer {
 public:
@@ -246,14 +246,14 @@ private:
 로그 버퍼의 `push`, `search` 등 주요 기능을 구현합니다. `std::mutex`를 사용하여 동시 접근을 제어합니다.
 
 ```cpp
-// [SEQUENCE: MVP4-17]
+// [SEQUENCE: MVP2-17]
 #include "LogBuffer.h"
 #include <sstream>
 #include <iomanip>
 
 LogBuffer::LogBuffer(size_t capacity) : capacity_(capacity) {}
 
-// [SEQUENCE: MVP4-18]
+// [SEQUENCE: MVP2-18]
 // 로그를 버퍼에 추가
 void LogBuffer::push(std::string message) {
     std::lock_guard<std::mutex> lock(mutex_);
@@ -264,7 +264,7 @@ void LogBuffer::push(std::string message) {
     totalLogs_++;
 }
 
-// [SEQUENCE: MVP4-19]
+// [SEQUENCE: MVP2-19]
 // 가장 오래된 로그를 삭제 (내부 헬퍼 함수)
 void LogBuffer::dropOldest_() {
     if (!buffer_.empty()) {
@@ -273,7 +273,7 @@ void LogBuffer::dropOldest_() {
     }
 }
 
-// [SEQUENCE: MVP4-20]
+// [SEQUENCE: MVP2-20]
 // 키워드를 포함하는 로그 검색
 std::vector<std::string> LogBuffer::search(const std::string& keyword) const {
     std::lock_guard<std::mutex> lock(mutex_);
@@ -290,14 +290,14 @@ std::vector<std::string> LogBuffer::search(const std::string& keyword) const {
     return results;
 }
 
-// [SEQUENCE: MVP4-21]
+// [SEQUENCE: MVP2-21]
 // 현재 버퍼 크기 반환
 size_t LogBuffer::size() const {
     std::lock_guard<std::mutex> lock(mutex_);
     return buffer_.size();
 }
 
-// [SEQUENCE: MVP4-22]
+// [SEQUENCE: MVP2-22]
 // 통계 정보 반환
 LogBuffer::StatsSnapshot LogBuffer::getStats() const {
     return { totalLogs_.load(), droppedLogs_.load() };
@@ -309,7 +309,7 @@ LogBuffer::StatsSnapshot LogBuffer::getStats() const {
 쿼리 처리를 캡슐화한 `QueryHandler` 클래스를 정의합니다.
 
 ```cpp
-// [SEQUENCE: MVP4-23]
+// [SEQUENCE: MVP2-23]
 #ifndef QUERYHANDLER_H
 #define QUERYHANDLER_H
 
@@ -339,13 +339,13 @@ private:
 `QueryHandler`의 멤버 함수를 구현합니다. MVP2에서는 간단한 문자열 파싱으로 명령을 처리합니다.
 
 ```cpp
-// [SEQUENCE: MVP4-24]
+// [SEQUENCE: MVP2-24]
 #include "QueryHandler.h"
 #include <sstream>
 
 QueryHandler::QueryHandler(std::shared_ptr<LogBuffer> buffer) : buffer_(buffer) {}
 
-// [SEQUENCE: MVP4-25]
+// [SEQUENCE: MVP2-25]
 // 쿼리 문자열을 파싱하고 적절한 핸들러 호출
 std::string QueryHandler::processQuery(const std::string& query) {
     if (query.find("QUERY keyword=") == 0) {
@@ -360,7 +360,7 @@ std::string QueryHandler::processQuery(const std::string& query) {
     return "ERROR: Unknown command. Use HELP for usage.\n";
 }
 
-// [SEQUENCE: MVP4-26]
+// [SEQUENCE: MVP2-26]
 // 검색 쿼리 처리
 std::string QueryHandler::handleSearch(const std::string& query) {
     std::string keyword = query.substr(14); // "QUERY keyword="
@@ -373,7 +373,7 @@ std::string QueryHandler::handleSearch(const std::string& query) {
     return ss.str();
 }
 
-// [SEQUENCE: MVP4-27]
+// [SEQUENCE: MVP2-27]
 // 통계 쿼리 처리
 std::string QueryHandler::handleStats() {
     auto stats = buffer_->getStats();
@@ -383,7 +383,7 @@ std::string QueryHandler::handleStats() {
     return ss.str();
 }
 
-// [SEQUENCE: MVP4-28]
+// [SEQUENCE: MVP2-28]
 // 카운트 쿼리 처리
 std::string QueryHandler::handleCount() {
     std::stringstream ss;
@@ -391,7 +391,7 @@ std::string QueryHandler::handleCount() {
     return ss.str();
 }
 
-// [SEQUENCE: MVP4-29]
+// [SEQUENCE: MVP2-29]
 // 도움말 쿼리 처리
 std::string QueryHandler::handleHelp() {
     return "Available commands:\n"
@@ -407,7 +407,7 @@ std::string QueryHandler::handleHelp() {
 `LogServer`가 `ThreadPool`과 `LogBuffer` 등 새로운 구성 요소들을 소유하고 관리하도록 수정됩니다.
 
 ```cpp
-// [SEQUENCE: MVP4-30]
+// [SEQUENCE: MVP2-30]
 #ifndef LOGSERVER_H
 #define LOGSERVER_H
 
@@ -458,7 +458,7 @@ private:
 `select` 기반의 이벤트 루프를 사용하여 두 개의 포트(로그, 쿼리)를 동시에 감시하고, 들어온 요청을 스레드 풀에 위임하는 로직으로 재구성됩니다.
 
 ```cpp
-// [SEQUENCE: MVP4-31]
+// [SEQUENCE: MVP2-31]
 #include "LogServer.h"
 #include <iostream>
 #include <sstream>
@@ -475,7 +475,7 @@ void signal_handler_cpp(int signum) {
     if (g_server_ptr) g_server_ptr->stop();
 }
 
-// [SEQUENCE: MVP4-32]
+// [SEQUENCE: MVP2-32]
 // 생성자: 모든 멤버 변수 초기화
 LogServer::LogServer(int port)
     : port_(port), queryPort_(9998), listenFd_(-1), queryFd_(-1), running_(false) {
@@ -486,13 +486,13 @@ LogServer::LogServer(int port)
     FD_ZERO(&masterSet_);
 }
 
-// [SEQUENCE: MVP4-33]
+// [SEQUENCE: MVP2-33]
 // 소멸자: 서버 중지
 LogServer::~LogServer() {
     stop();
 }
 
-// [SEQUENCE: MVP4-34]
+// [SEQUENCE: MVP2-34]
 // 서버 시작
 void LogServer::start() {
     if (running_) return;
@@ -502,7 +502,7 @@ void LogServer::start() {
     runEventLoop();
 }
 
-// [SEQUENCE: MVP4-35]
+// [SEQUENCE: MVP2-35]
 // 서버 중지
 void LogServer::stop() {
     if (!running_) return;
@@ -512,7 +512,7 @@ void LogServer::stop() {
     logger_->log("Server stopped.");
 }
 
-// [SEQUENCE: MVP4-36]
+// [SEQUENCE: MVP2-36]
 // 리스너 소켓 생성 및 초기화
 void LogServer::initialize() {
     auto create_listener = [&](int port) -> int {
@@ -536,7 +536,7 @@ void LogServer::initialize() {
     signal(SIGINT, signal_handler_cpp);
 }
 
-// [SEQUENCE: MVP4-37]
+// [SEQUENCE: MVP2-37]
 // 메인 이벤트 루프
 void LogServer::runEventLoop() {
     while (running_) {
@@ -559,7 +559,7 @@ void LogServer::runEventLoop() {
     }
 }
 
-// [SEQUENCE: MVP4-38]
+// [SEQUENCE: MVP2-38]
 // 새 연결 처리
 void LogServer::handleNewConnection(int listener_fd, bool is_query_port) {
     int client_fd = accept(listener_fd, nullptr, nullptr);
@@ -572,7 +572,7 @@ void LogServer::handleNewConnection(int listener_fd, bool is_query_port) {
     }
 }
 
-// [SEQUENCE: MVP4-39]
+// [SEQUENCE: MVP2-39]
 // 로그 클라이언트 작업
 void LogServer::handleClientTask(int client_fd) {
     char buffer[4096];
@@ -585,7 +585,7 @@ void LogServer::handleClientTask(int client_fd) {
     close(client_fd);
 }
 
-// [SEQUENCE: MVP4-40]
+// [SEQUENCE: MVP2-40]
 // 쿼리 클라이언트 작업
 void LogServer::handleQueryTask(int client_fd) {
     char buffer[4096];
@@ -607,13 +607,13 @@ void LogServer::handleQueryTask(int client_fd) {
 `main` 함수는 `LogServer`를 생성하고 `start()`를 호출하는 역할만 합니다. 모든 복잡성은 `LogServer` 클래스 내부에서 처리됩니다.
 
 ```cpp
-// [SEQUENCE: MVP4-41]
+// [SEQUENCE: MVP2-41]
 #include "LogServer.h"
 #include <iostream>
 
 int main(int argc, char* argv[]) {
     try {
-        // [SEQUENCE: MVP4-42]
+        // [SEQUENCE: MVP2-42]
         int port = (argc > 1) ? std::stoi(argv[1]) : 9999;
         LogServer server(port);
         server.start();

@@ -1,3 +1,13 @@
+// [HISTORICAL NOTE for C++ MVP3]
+// This C++ Query Parser was introduced in the third C++ MVP. It provides
+// the same advanced query features as the C version's MVP3, but is implemented
+// using modern C++ features like std::regex, std::optional, and std::chrono
+// for improved type safety and expressiveness.
+//
+// To see the original specification for this module, please refer to:
+// - Document: /devhistory/DevHistory/DevHistory06.md
+// - Sequences: [SEQUENCE: MVP3-3] through [SEQUENCE: MVP3-10]
+
 #ifndef QUERY_PARSER_H
 #define QUERY_PARSER_H
 

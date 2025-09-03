@@ -1,3 +1,11 @@
+// [HISTORICAL NOTE for C++ MVP2]
+// This QueryHandler class was introduced in the second C++ MVP to encapsulate
+// all logic for processing commands from the query port.
+//
+// To see the original specification for this module, please refer to:
+// - Document: /devhistory/DevHistory/DevHistory04.md
+// - Sequences: [SEQUENCE: MVP2-23] through [SEQUENCE: MVP2-29]
+
 #ifndef QUERYHANDLER_H
 #define QUERYHANDLER_H
 

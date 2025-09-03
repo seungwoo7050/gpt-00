@@ -1,3 +1,13 @@
+// [HISTORICAL NOTE for C++ MVP4]
+// This C++ PersistenceManager was introduced in the fourth C++ MVP. It provides
+// the same asynchronous file logging and rotation as the C version's MVP4,
+// but is implemented using modern C++ features like std::thread, std::mutex,
+// std::filesystem, and std::fstream for improved safety and portability.
+//
+// To see the original specification for this module, please refer to:
+// - Document: /devhistory/DevHistory/DevHistory08.md
+// - Sequences: [SEQUENCE: MVP4-4] through [SEQUENCE: MVP4-12]
+
 #ifndef PERSISTENCE_H
 #define PERSISTENCE_H
 

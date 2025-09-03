@@ -1,3 +1,12 @@
+// [HISTORICAL NOTE for C++ MVP2]
+// This C++11-based thread pool was introduced in the second C++ MVP.
+// It replaced the simple "thread-per-client" model from the first C++ MVP,
+// providing a much more scalable and efficient concurrency model.
+//
+// To see the original specification for this module, please refer to:
+// - Document: /devhistory/DevHistory/DevHistory04.md
+// - Sequences: [SEQUENCE: MVP2-4] through [SEQUENCE: MVP2-13]
+
 #ifndef THREADPOOL_H
 #define THREADPOOL_H
 

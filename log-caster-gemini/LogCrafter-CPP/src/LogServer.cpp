@@ -140,6 +140,19 @@ void LogServer::initialize() {
     signal(SIGINT, signalHandler);
 }
 
+// [HISTORICAL NOTE for MVP2]
+// The event loop has evolved significantly from the initial C++ MVP.
+// The original implementation (in a method called accept_connections) was a simple
+// `while(running_)` loop that would block on `accept()` and then spin up a new
+// `std::thread` for each client.
+//
+// This was replaced by the current `select`-based model which delegates tasks
+// to a thread pool, a more scalable architecture.
+//
+// To see the original MVP2 source code for the thread-per-client model, see:
+// - Document: /devhistory/DevHistory/DevHistory02.md
+// - Sequences: [SEQUENCE: MVP2-21] and [SEQUENCE: MVP2-22]
+
 // [SEQUENCE: 229] Main event loop - MVP2 version
 void LogServer::runEventLoop() {
     timeval tv{};
@@ -242,6 +255,18 @@ void LogServer::handleQueryConnection() {
     });
 }
 
+// [HISTORICAL NOTE for MVP2]
+// This function is the successor to the `handle_client` method from the initial
+// C++ MVP. The original `handle_client` was executed in its own dedicated
+// `std::thread` (a thread-per-client model).
+//
+// This was changed to the current model where this function runs as a task
+// within a thread pool, which is more efficient for managing many clients.
+//
+// To see the original MVP2 source code for the `handle_client` method, see:
+// - Document: /devhistory/DevHistory/DevHistory02.md
+// - Sequence: [SEQUENCE: MVP2-23]
+
 // [SEQUENCE: 234] Client task handler (runs in thread pool)
 void LogServer::handleClientTask(int clientFd, const std::string& address) {
     logger_->info("Client handler started for " + address);
@@ -249,6 +274,16 @@ void LogServer::handleClientTask(int clientFd, const std::string& address) {
     char buffer[BUFFER_SIZE];
     ssize_t bytesRead;
     
+    // [HISTORICAL NOTE for C++ MVP5]
+    // A security hardening step was specified in C++ MVP5 to prevent resource
+    // exhaustion from oversized log messages. The plan was to truncate any
+    // message longer than a predefined SAFE_LOG_LENGTH. This logic would
+    // be placed here, after receiving the data and before processing it.
+    //
+    // To see the original specification for this feature, please refer to:
+    // - Document: /devhistory/DevHistory/DevHistory10.md
+    // - Sequence: [SEQUENCE: MVP5-5]
+
     // [SEQUENCE: 235] Read logs from client
     while ((bytesRead = recv(clientFd, buffer, BUFFER_SIZE - 1, 0)) > 0) {
         buffer[bytesRead] = '\0';

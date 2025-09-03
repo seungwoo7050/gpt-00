@@ -1,3 +1,12 @@
+// [HISTORICAL NOTE for MVP2]
+// This file, along with `log_buffer.h`, was introduced in MVP2. It provides
+// a thread-safe, in-memory circular buffer for storing logs. This replaced
+// the MVP1 behavior of simply printing logs to stdout.
+//
+// To see the original specification for this module, please refer to:
+// - Document: /devhistory/DevHistory/DevHistory03.md
+// - Sequences: [SEQUENCE: MVP2-18] through [SEQUENCE: MVP2-31]
+
 #include "log_buffer.h"
 #include "query_parser.h"
 #include <stdlib.h>
@@ -259,6 +268,15 @@ void log_buffer_destroy(log_buffer_t* buffer) {
     free(buffer->entries);
     free(buffer);
 }
+
+// [HISTORICAL NOTE for MVP3]
+// The original `log_buffer_search` function from MVP2 only supported a
+// simple keyword search. This `log_buffer_search_enhanced` function was
+// added in MVP3 to support complex queries parsed by the new QueryParser module.
+//
+// To see the original specification for this function, please refer to:
+// - Document: /devhistory/DevHistory/DevHistory05.md
+// - Sequence: [SEQUENCE: MVP3-18]
 
 // [SEQUENCE: 260] Enhanced search with query parser
 int log_buffer_search_enhanced(log_buffer_t* buffer, const struct parsed_query* query, 

@@ -22,7 +22,7 @@
 `log_server_t` 구조체에 클라이언트 카운터 보호를 위한 뮤텍스를 추가합니다.
 
 ```c
-// [SEQUENCE: MVP9-1] 
+// [SEQUENCE: MVP5-1] 
 #ifndef SERVER_H
 #define SERVER_H
 
@@ -35,7 +35,7 @@ typedef struct log_server {
     log_buffer_t* log_buffer;
     persistence_manager_t* persistence;
 
-    // [SEQUENCE: MVP9-2]
+    // [SEQUENCE: MVP5-2]
     // MVP5 추가: client_count 보호를 위한 뮤텍스
     pthread_mutex_t client_count_mutex;
 } log_server_t;
@@ -50,10 +50,10 @@ typedef struct log_server {
 클라이언트 수( `client_count`)를 증가시키거나 감소시키는 모든 지점에 뮤텍스 잠금을 추가하고, 로그 메시지 크기를 검증하는 로직을 추가합니다.
 
 ```c
-// [SEQUENCE: MVP9-3]
+// [SEQUENCE: MVP5-3]
 // ... (include 및 전역 변수 선언)
 
-// [SEQUENCE: MVP9-4]
+// [SEQUENCE: MVP5-4]
 // 클라이언트 처리 작업 (MVP5 버전)
 static void handle_client_job(void* arg) {
     client_job_t* job = (client_job_t*)arg;
@@ -63,7 +63,7 @@ static void handle_client_job(void* arg) {
     while ((bytes_read = recv(job->client_fd, buffer, BUFFER_SIZE - 1, 0)) > 0) {
         buffer[bytes_read] = '\0';
 
-        // [SEQUENCE: MVP9-5]
+        // [SEQUENCE: MVP5-5]
         // 로그 메시지 크기 제한 및 절단
         const int SAFE_LOG_LENGTH = 1024;
         if (bytes_read > SAFE_LOG_LENGTH) {
@@ -84,7 +84,7 @@ static void handle_client_job(void* arg) {
 
     close(job->client_fd);
 
-    // [SEQUENCE: MVP9-6]
+    // [SEQUENCE: MVP5-6]
     // client_count를 스레드 안전하게 감소
     pthread_mutex_lock(&job->server->client_count_mutex);
     job->server->client_count--;
@@ -93,13 +93,13 @@ static void handle_client_job(void* arg) {
     free(job);
 }
 
-// [SEQUENCE: MVP9-7]
+// [SEQUENCE: MVP5-7]
 // 새 연결 처리 로직 (MVP5 버전)
 static void handle_new_connection(log_server_t* server) {
     int new_fd = accept(server->listen_fd, NULL, NULL);
     if (new_fd < 0) return;
 
-    // [SEQUENCE: MVP9-8]
+    // [SEQUENCE: MVP5-8]
     // client_count 접근 전후로 뮤텍스 잠금/해제
     pthread_mutex_lock(&server->client_count_mutex);
     if (server->client_count >= MAX_CLIENTS) {
@@ -124,7 +124,7 @@ static void handle_new_connection(log_server_t* server) {
     thread_pool_add_job(server->thread_pool, handle_client_job, job);
 }
 
-// [SEQUENCE: MVP9-9]
+// [SEQUENCE: MVP5-9]
 // 서버 생성 및 소멸 시 뮤텍스 초기화/파괴
 log_server_t* server_create(int port) {
     log_server_t* server = calloc(1, sizeof(log_server_t));
@@ -152,7 +152,7 @@ void server_destroy(log_server_t* server) {
 정규식 컴파일 실패 시 `regex_pattern` 문자열이 담긴 메모리가 누수되던 버그를 수정합니다.
 
 ```c
-// [SEQUENCE: MVP9-10]
+// [SEQUENCE: MVP5-10]
 // ... (query_parser_parse 함수 내부)
 
             } else if (strcasecmp(key, "regex") == 0) {
@@ -164,7 +164,7 @@ void server_destroy(log_server_t* server) {
                     free(query->compiled_regex);
                     query->compiled_regex = NULL;
 
-                    // [SEQUENCE: MVP9-11]
+                    // [SEQUENCE: MVP5-11]
                     // 메모리 누수를 유발했던 아래 라인 추가
                     if (query->regex_pattern) {
                         free(query->regex_pattern);
@@ -179,7 +179,7 @@ void server_destroy(log_server_t* server) {
 안전하지 않은 `atoi`를 `strtol`로 교체하고, 입력값에 대한 범위 및 오버플로우 검사를 추가합니다.
 
 ```c
-// [SEQUENCE: MVP9-12]
+// [SEQUENCE: MVP5-12]
 #include "server.h"
 #include "persistence.h"
 #include <stdio.h>
@@ -198,7 +198,7 @@ int main(int argc, char* argv[]) {
     while ((opt = getopt(argc, argv, "p:d:s:Ph")) != -1) {
         switch (opt) {
             case 'p': {
-                // [SEQUENCE: MVP9-13]
+                // [SEQUENCE: MVP5-13]
                 // 포트 번호에 대한 안전한 파싱
                 char* endptr;
                 errno = 0;
@@ -212,7 +212,7 @@ int main(int argc, char* argv[]) {
             }
             // ... (d, P 옵션은 동일)
             case 's': {
-                // [SEQUENCE: MVP9-14]
+                // [SEQUENCE: MVP5-14]
                 // 파일 크기에 대한 안전한 파싱 및 오버플로우 방지
                 char* endptr;
                 errno = 0;
@@ -246,7 +246,7 @@ int main(int argc, char* argv[]) {
 - **(문서화)** 메모리 누수 수정은 `valgrind`와 같은 도구를 사용하여 검증합니다.
 
 ```python
-# [SEQUENCE: MVP9-15]
+# [SEQUENCE: MVP5-15]
 #!/usr/bin/env python3
 import socket
 import threading

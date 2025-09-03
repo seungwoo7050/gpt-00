@@ -1,3 +1,13 @@
+// [HISTORICAL NOTE for MVP3]
+// This query parser module was introduced in MVP3 to provide advanced
+// search capabilities, replacing the simple keyword search of MVP2.
+// It handles parsing multiple parameters, including keywords, regex,
+// and time filters.
+//
+// To see the original specification for this module, please refer to:
+// - Document: /devhistory/DevHistory/DevHistory05.md
+// - Sequences: [SEQUENCE: MVP3-3] through [SEQUENCE: MVP3-14]
+
 #include "query_parser.h"
 #include <stdlib.h>
 #include <string.h>

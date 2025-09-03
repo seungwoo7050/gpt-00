@@ -150,8 +150,8 @@ void IRCCommandHandler::handleUSER(std::shared_ptr<IRCClient> client,
 }
 
 // [SEQUENCE: 797] Handle PASS command (optional)
-void IRCCommandHandler::handlePASS(std::shared_ptr<IRCClient> client,
-                                   const IRCCommandParser::IRCCommand& cmd) {
+void IRCCommandHandler::handlePASS(std::shared_ptr<IRCClient> /*client*/,
+                                   const IRCCommandParser::IRCCommand& /*cmd*/) {
     // For now, we don't require passwords
     // This is where server password checking would go
 }
@@ -351,7 +351,7 @@ void IRCCommandHandler::handlePING(std::shared_ptr<IRCClient> client,
 
 // [SEQUENCE: 812] Handle PONG command
 void IRCCommandHandler::handlePONG(std::shared_ptr<IRCClient> client,
-                                   const IRCCommandParser::IRCCommand& cmd) {
+                                   const IRCCommandParser::IRCCommand& /*cmd*/) {
     // Update activity timestamp
     client->updateLastActivity();
 }
@@ -409,8 +409,8 @@ void IRCCommandHandler::handleTOPIC(std::shared_ptr<IRCClient> client,
 }
 
 // [SEQUENCE: 816] Continue with remaining handlers...
-void IRCCommandHandler::handleNAMES(std::shared_ptr<IRCClient> client,
-                                    const IRCCommandParser::IRCCommand& cmd) {
+void IRCCommandHandler::handleNAMES(std::shared_ptr<IRCClient> /*client*/,
+                                    const IRCCommandParser::IRCCommand& /*cmd*/) {
     // Implementation continues...
 }
 
@@ -504,7 +504,7 @@ void IRCCommandHandler::initializeDefaultLogChannels() {
 }
 
 // [SEQUENCE: 826] Process log query commands
-void IRCCommandHandler::processLogQuery(std::shared_ptr<IRCClient> client,
+void IRCCommandHandler::processLogQuery(std::shared_ptr<IRCClient> /*client*/,
                                        const std::string& channel,
                                        const std::string& query) {
     // Parse command (e.g., "!query COUNT level:ERROR")
@@ -540,3 +540,17 @@ void IRCCommandHandler::registerHandler(const std::string& command, CommandHandl
 void IRCCommandHandler::unregisterHandler(const std::string& command) {
     handlers_.erase(IRCCommandParser::toUpper(command));
 }
+// [SEQUENCE: 829] Stub implementations for missing handlers to resolve linker errors
+void IRCCommandHandler::handleLIST(std::shared_ptr<IRCClient> client, const IRCCommandParser::IRCCommand& cmd) { (void)client; (void)cmd; }
+void IRCCommandHandler::handleKICK(std::shared_ptr<IRCClient> client, const IRCCommandParser::IRCCommand& cmd) { (void)client; (void)cmd; }
+void IRCCommandHandler::handleMODE(std::shared_ptr<IRCClient> client, const IRCCommandParser::IRCCommand& cmd) { (void)client; (void)cmd; }
+void IRCCommandHandler::handleWHO(std::shared_ptr<IRCClient> client, const IRCCommandParser::IRCCommand& cmd) { (void)client; (void)cmd; }
+void IRCCommandHandler::handleWHOIS(std::shared_ptr<IRCClient> client, const IRCCommandParser::IRCCommand& cmd) { (void)client; (void)cmd; }
+void IRCCommandHandler::handleMOTD(std::shared_ptr<IRCClient> client, const IRCCommandParser::IRCCommand& cmd) { (void)client; (void)cmd; }
+void IRCCommandHandler::handleVERSION(std::shared_ptr<IRCClient> client, const IRCCommandParser::IRCCommand& cmd) { (void)client; (void)cmd; }
+void IRCCommandHandler::handleTIME(std::shared_ptr<IRCClient> client, const IRCCommandParser::IRCCommand& cmd) { (void)client; (void)cmd; }
+void IRCCommandHandler::handleINFO(std::shared_ptr<IRCClient> client, const IRCCommandParser::IRCCommand& cmd) { (void)client; (void)cmd; }
+void IRCCommandHandler::handleLOGQUERY(std::shared_ptr<IRCClient> client, const IRCCommandParser::IRCCommand& cmd) { (void)client; (void)cmd; }
+void IRCCommandHandler::handleLOGFILTER(std::shared_ptr<IRCClient> client, const IRCCommandParser::IRCCommand& cmd) { (void)client; (void)cmd; }
+void IRCCommandHandler::handleLOGSTREAM(std::shared_ptr<IRCClient> client, const IRCCommandParser::IRCCommand& cmd) { (void)client; (void)cmd; }
+void IRCCommandHandler::handleLOGSTATS(std::shared_ptr<IRCClient> client, const IRCCommandParser::IRCCommand& cmd) { (void)client; (void)cmd; }

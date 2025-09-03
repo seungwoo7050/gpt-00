@@ -14,11 +14,28 @@ int main(int argc, char* argv[]) {
     char log_directory[256] = "./logs";
     size_t max_file_size = 10 * 1024 * 1024; // 10MB default
     
+    // [HISTORICAL NOTE for MVP4]
+    // The command-line argument parsing for persistence options (`-P`, `-d`, `-s`)
+    // was introduced in MVP4 to allow users to configure the new persistence layer.
+    //
+    // To see the original specification for this feature, please refer to:
+    // - Document: /devhistory/DevHistory/DevHistory07.md
+    // - Sequence: [SEQUENCE: MVP4-24]
+
     // [SEQUENCE: 29] Parse command line arguments
     int opt;
     while ((opt = getopt(argc, argv, "p:d:s:Ph")) != -1) {
         switch (opt) {
             case 'p': {
+                // [HISTORICAL NOTE for MVP5]
+                // The simple `atoi` call was replaced in MVP5 with this `strtol` block
+                // to provide robust error checking and prevent potential integer overflows
+                // from invalid command-line arguments.
+                //
+                // To see the original specification for this security fix, please refer to:
+                // - Document: /devhistory/DevHistory/DevHistory09.md
+                // - Sequence: [SEQUENCE: MVP5-13]
+
                 // [SEQUENCE: 408] Safe integer parsing with overflow check
                 char* endptr;
                 errno = 0;
@@ -34,7 +51,9 @@ int main(int argc, char* argv[]) {
                 persistence_enabled = true;
                 break;
             case 'd':
-                strncpy(log_directory, optarg, sizeof(log_directory) - 1);
+                // Use snprintf for safe string copy, preventing buffer overflows and
+                // satisfying compiler warnings about potential truncation.
+                snprintf(log_directory, sizeof(log_directory), "%s", optarg);
                 break;
             case 's': {
                 // [SEQUENCE: 409] Prevent integer overflow in file size calculation
@@ -84,7 +103,8 @@ int main(int argc, char* argv[]) {
             .flush_interval_ms = 1000,
             .load_on_startup = true
         };
-        strncpy(persist_config.log_directory, log_directory, sizeof(persist_config.log_directory) - 1);
+        // Use snprintf for safe string copy.
+        snprintf(persist_config.log_directory, sizeof(persist_config.log_directory), "%s", log_directory);
         
         server->persistence = persistence_create(&persist_config);
         if (!server->persistence) {

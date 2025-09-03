@@ -107,7 +107,7 @@ void IRCChannel::broadcastExcept(const std::string& message,
     std::shared_lock<std::shared_mutex> lock(mutex_);
     
     for (const auto& [nick, client] : clients_) {
-        if (nick == exceptNick) {
+        if (nick == exceptNick || (!sender.empty() && nick == sender)) {
             continue;
         }
         client->sendMessage(message);
